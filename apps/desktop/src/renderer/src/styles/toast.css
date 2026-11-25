@@ -1,0 +1,110 @@
+/* ============================================================
+ * 撤销提示条
+ * ========================================================== */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /*
+   * 关键：必须写死 width。
+   * 只给 left:50% 时，fixed 定位的"可用宽度"只剩窗口的一半，
+   * flex 的 shrink-to-fit 会把提示条卡在半个窗口宽，9 个字的标题都会被截。
+   */
+  width: max-content;
+  max-width: calc(100% - 24px);
+  padding: 8px 9px 8px 13px;
+  background: var(--surface);
+  border: var(--bw) solid var(--line);
+  border-radius: 999px;
+  box-shadow: var(--shadow-lift);
+  animation: toast-in 0.16s ease-out;
+  -webkit-app-region: no-drag;
+}
+
+/* 竖屏「今日」底部有 .m-bar（约 76px），提示条要浮在它上面，别盖住「今」和「＋」 */
+.shell-portrait .toast {
+  bottom: 86px;
+}
+
+/* 周视图底栏是 .stats，较矮 */
+.toast.as-week {
+  bottom: 58px;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+html[data-theme='brutal'] .toast {
+  border-radius: 0;
+  border-width: 2px;
+  box-shadow: 4px 4px 0 var(--line);
+}
+html[data-theme='neo'] .toast {
+  border: 0;
+  border-radius: 999px;
+  box-shadow:
+    6px 6px 16px rgba(126, 121, 168, 0.3),
+    -6px -6px 16px rgba(255, 255, 255, 0.9);
+}
+
+.toast-text {
+  flex: 1 1 auto;
+  font-size: 12px;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.toast-action {
+  flex: 0 0 auto;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: var(--bw) solid var(--line);
+  transition: filter 0.14s;
+}
+html[data-theme='brutal'] .toast-action {
+  border-radius: 0;
+  border-width: 1.5px;
+}
+html[data-theme='neo'] .toast-action {
+  border: 0;
+}
+.toast-action:hover {
+  filter: brightness(0.94);
+}
+
+.toast-close {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 9px;
+  color: var(--muted);
+  transition: background 0.14s, color 0.14s;
+}
+.toast-close:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}

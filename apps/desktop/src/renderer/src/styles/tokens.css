@@ -1,0 +1,97 @@
+/* ============================================================
+ * 三套皮肤 · 设计 token
+ * 来源：挂卡时间轴-样稿\挂卡时间轴-完整样稿.html
+ * 规则：这里只放变量，不放任何具体组件样式。
+ * ========================================================== */
+
+html[data-theme='organic'] {
+  --paper: #f1ebdf;
+  --paper-2: #e8dfcd;
+  --surface: #fbf7ee;
+  --surface-2: #f2ead9;
+  --ink: #2b2620;
+  --ink-2: #453c30;
+  --muted: #8c8170;
+  --line: #d9cdb8;
+  --line-2: #bfae92;
+  --accent: #71805a;
+  --accent-ink: #fdfbf4;
+  --accent-soft: #dde3cd;
+  --warn: #b3613a;
+  --warn-soft: #f3ddca;
+  --radius: 22px;
+  --radius-sm: 13px;
+  --bw: 1px;
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.75) inset, 0 12px 30px -20px rgba(74, 60, 38, 0.55);
+  --shadow-lift: 0 2px 0 rgba(255, 255, 255, 0.7) inset, 0 18px 38px -22px rgba(74, 60, 38, 0.6);
+  /*
+   * 数字/英文走 Fraunces（自带，老式衬线，有视觉尺寸轴），
+   * 中文落到 Noto Serif SC —— 两个都是衬线，标题和数字是一家人。
+   */
+  --font-display: 'Instrument Serif', 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', Georgia, serif;
+  --font-body: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'DengXian', system-ui, sans-serif;
+  --font-label: 'Space Mono', 'Noto Sans SC', 'Microsoft YaHei', monospace;
+  --tex: radial-gradient(1200px 600px at 12% -8%, rgba(255, 255, 255, 0.62), transparent 60%),
+    radial-gradient(900px 500px at 88% 4%, rgba(198, 168, 120, 0.16), transparent 62%),
+    repeating-linear-gradient(0deg, rgba(120, 96, 60, 0.022) 0 1px, transparent 1px 3px);
+  --grid-line: rgba(120, 96, 60, 0.14);
+}
+
+html[data-theme='brutal'] {
+  --paper: #f6f1e2;
+  --paper-2: #efe7d3;
+  --surface: #fffdf3;
+  --surface-2: #f2ecd9;
+  --ink: #141310;
+  --ink-2: #1f1d18;
+  --muted: #5d574a;
+  --line: #141310;
+  --line-2: #141310;
+  --accent: #ffd84d;
+  --accent-ink: #141310;
+  --accent-soft: #fff0a8;
+  --warn: #ff5a36;
+  --warn-soft: #ffd8cc;
+  --radius: 0px;
+  --radius-sm: 0px;
+  --bw: 2px;
+  --shadow: 5px 5px 0 #141310;
+  --shadow-lift: 8px 8px 0 #141310;
+  /*
+   * 原来写 'Courier New' 但没给中文兜底，中文会随机落到宋体。
+   * 现在显式指定：拉丁用 Space Mono，中文用 Noto Sans SC 加粗。
+   */
+  --font-display: 'Space Mono', 'Noto Sans SC', 'Microsoft YaHei', Consolas, monospace;
+  --font-body: 'Noto Sans SC', 'Microsoft YaHei', 'DengXian', system-ui, sans-serif;
+  --font-label: 'Space Mono', Consolas, 'Courier New', monospace;
+  --tex: radial-gradient(rgba(20, 19, 16, 0.13) 1px, transparent 1.1px) 0 0 / 16px 16px;
+  --grid-line: rgba(20, 19, 16, 0.22);
+}
+
+html[data-theme='neo'] {
+  --paper: #e7e6f1;
+  --paper-2: #e0dfec;
+  --surface: #eceaf5;
+  --surface-2: #e4e2ef;
+  --ink: #4a4760;
+  --ink-2: #5c5876;
+  --muted: #8d89a4;
+  --line: rgba(74, 71, 96, 0.14);
+  --line-2: rgba(74, 71, 96, 0.24);
+  --accent: #6c69f2;
+  --accent-ink: #f7f6ff;
+  --accent-soft: #d9d6ff;
+  --warn: #dd6a8c;
+  --warn-soft: #f8dde6;
+  --radius: 26px;
+  --radius-sm: 18px;
+  --bw: 1px;
+  --shadow: 9px 9px 22px rgba(126, 121, 168, 0.28), -9px -9px 22px rgba(255, 255, 255, 0.9);
+  --shadow-lift: 12px 12px 26px rgba(126, 121, 168, 0.34), -10px -10px 24px rgba(255, 255, 255, 0.95);
+  --font-display: 'Outfit', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-body: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'DengXian', system-ui, sans-serif;
+  --font-label: 'Outfit', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  --tex: radial-gradient(900px 520px at 18% 0%, rgba(255, 255, 255, 0.55), transparent 62%),
+    radial-gradient(700px 480px at 88% 10%, rgba(160, 150, 255, 0.14), transparent 60%);
+  --grid-line: rgba(108, 105, 242, 0.16);
+}

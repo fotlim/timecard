@@ -1,0 +1,33 @@
+{
+  "name": "@timecard/server",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "挂卡时间轴 · 同步服务器（Node + Cloudflare 双运行时）",
+  "main": "./dist/node.js",
+  "scripts": {
+    "gen:ui": "node scripts/gen-ui.mjs",
+    "build": "node scripts/gen-ui.mjs && tsc -p tsconfig.json",
+    "bundle": "node scripts/gen-ui.mjs && node scripts/bundle.mjs",
+    "start": "node dist/node.js",
+    "dev": "node dist/node.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node test/e2e.js && node test/concurrency.js && node test/admin.js",
+    "test:e2e": "node test/e2e.js",
+    "test:conc": "node test/concurrency.js",
+    "test:admin": "node test/admin.js",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
+    "deploy:cf": "wrangler deploy",
+    "d1:create": "wrangler d1 create timecard"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "@timecard/shared": "workspace:*",
+    "hono": "^4.6.14"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241218.0",
+    "@types/node": "^24.19.2",
+    "esbuild": "^0.28.2"
+  }
+}

@@ -1,0 +1,45 @@
+/* ============================================================
+ * 自带字体（只含拉丁子集，共 ~130 KB）
+ *
+ * 为什么只打包拉丁：中文全字库动辄 5–20 MB，桌面应用不该为字体
+ * 付这个体积。中文统一交给系统里最好的那几个（Noto Sans/Serif SC、
+ * 微软雅黑、等线），拉丁部分（日期数字、BILLS、0/2 这些）用有性格的字。
+ * ========================================================== */
+
+/*
+ * 自然有机：数字用 Instrument Serif —— 高对比、字形笔直的展示衬线，
+ * 和米纸 + 宋体标题是一路的。
+ * （先试过 Fraunces，但它那种"wonky"书法字形放在日期上会被读成斜体，弃了）
+ */
+@font-face {
+  font-family: 'Instrument Serif';
+  src: url('../assets/fonts/instrumentserif-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 野兽派：等宽字才有"打字机/标签"的硬气 */
+@font-face {
+  font-family: 'Space Mono';
+  src: url('../assets/fonts/spacemono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Space Mono';
+  src: url('../assets/fonts/spacemono-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 新拟物质：几何无衬线，圆润克制，配双向阴影 */
+@font-face {
+  font-family: 'Outfit';
+  src: url('../assets/fonts/outfit-200700.woff2') format('woff2-variations');
+  font-weight: 200 700;
+  font-style: normal;
+  font-display: swap;
+}

@@ -1,0 +1,47 @@
+appId: com.timecard.desktop
+productName: 挂卡时间轴
+copyright: Copyright © 2026
+
+directories:
+  output: release
+  buildResources: build
+
+# 直接用本地已装好的 electron，不去下载 110MB 的 zip
+electronDist: ../../node_modules/.pnpm/electron@45.4.1/node_modules/electron/dist
+
+# 没有原生模块，跳过 rebuild
+npmRebuild: false
+buildDependenciesFromSource: false
+
+# 共享层已经打进 bundle，运行期不需要 node_modules
+files:
+  - out/**/*
+  - package.json
+  - '!**/*.map'
+
+# 托盘图标要能从 asar 外面读到
+extraResources:
+  - from: build/icon.ico
+    to: icon.ico
+
+asar: true
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/icon.ico
+  artifactName: ${productName}-${version}-setup.${ext}
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: 挂卡时间轴
+  deleteAppDataOnUninstall: false
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico

@@ -1,0 +1,147 @@
+/* ============================================================
+ * 自绘右键菜单 —— 跟随三套皮肤
+ * portal 挂在 body 上，所以用 html[data-theme] 选择器就够了
+ * ========================================================== */
+
+.ctxmenu {
+  position: fixed;
+  z-index: 300;
+  min-width: 190px;
+  max-width: 260px;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 5px;
+  background: var(--surface);
+  border: var(--bw) solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lift);
+  animation: ctx-in 0.11s ease-out;
+  transform-origin: top left;
+}
+
+@keyframes ctx-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ---------- 野兽派：直角 + 硬投影 ---------- */
+html[data-theme='brutal'] .ctxmenu {
+  border-radius: 0;
+  border-width: 2.5px;
+  box-shadow: 5px 5px 0 var(--line);
+  padding: 4px;
+}
+
+/* ---------- 新拟物：无边框 + 同色系双向阴影 ---------- */
+html[data-theme='neo'] .ctxmenu {
+  border: 0;
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow:
+    8px 8px 20px rgba(126, 121, 168, 0.28),
+    -8px -8px 20px rgba(255, 255, 255, 0.92);
+  padding: 7px;
+}
+
+/* ---------- 条目 ---------- */
+.ctx-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 7px 11px;
+  border-radius: calc(var(--radius-sm) - 6px);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink);
+  background: transparent;
+  transition: background 0.12s, color 0.12s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html[data-theme='brutal'] .ctx-item {
+  border-radius: 0;
+  font-family: var(--font-label);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+}
+html[data-theme='neo'] .ctx-item {
+  border-radius: 9px;
+}
+
+.ctx-item:not(:disabled):hover {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+html[data-theme='brutal'] .ctx-item:not(:disabled):hover {
+  background: var(--accent);
+  color: var(--accent-ink);
+  outline: 2px solid var(--line);
+  outline-offset: -2px;
+}
+html[data-theme='neo'] .ctx-item:not(:disabled):hover {
+  background: var(--surface-2);
+  box-shadow: inset 2px 2px 5px rgba(126, 121, 168, 0.22),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85);
+}
+
+.ctx-item:disabled {
+  color: var(--muted);
+  opacity: 0.55;
+  cursor: default;
+}
+
+.ctx-item.danger {
+  color: var(--warn);
+}
+/* neo 的 --warn(#dd6a8c) 压在浅紫底上对比度偏低，危险项单独加深一档 */
+html[data-theme='neo'] .ctx-item.danger {
+  color: #c23f68;
+}
+.ctx-item.danger:not(:disabled):hover {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+html[data-theme='brutal'] .ctx-item.danger:not(:disabled):hover {
+  background: var(--warn);
+  color: #fff8f0;
+}
+
+/* ---------- 分隔线 ---------- */
+.ctx-sep {
+  height: 1px;
+  margin: 4px 8px;
+  background: var(--line-2);
+}
+html[data-theme='brutal'] .ctx-sep {
+  height: 2px;
+  background: var(--line);
+  margin: 4px 6px;
+}
+html[data-theme='neo'] .ctx-sep {
+  background: transparent;
+  box-shadow: inset 0 1px 2px rgba(126, 121, 168, 0.28),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.9);
+  margin: 5px 8px;
+  height: 2px;
+}
+
+/* ---------- 说明行（不可点） ---------- */
+.ctx-note {
+  padding: 5px 11px 6px;
+  font-family: var(--font-label);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+html[data-theme='brutal'] .ctx-note {
+  color: var(--ink-2);
+  letter-spacing: 0.12em;
+}

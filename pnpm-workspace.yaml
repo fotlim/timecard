@@ -1,0 +1,11 @@
+﻿packages:
+  - 'packages/*'
+  - 'apps/*'
+
+onlyBuiltDependencies:
+  - electron
+  - esbuild
+
+# electron-winstaller 是 electron-builder 的传递依赖，我们打 NSIS 用不到它
+ignoredBuiltDependencies:
+  - electron-winstaller

@@ -1,0 +1,422 @@
+/* ============================================================
+ * 真·浮窗专用：透明窗口，只有面板本身
+ * ========================================================== */
+
+html,
+body,
+#root {
+  height: auto;
+  min-height: 0;
+  background: transparent !important;
+  background-image: none !important;
+  overflow: hidden;
+}
+
+.quick-body {
+  margin: 0;
+}
+
+/* 留出 10px 给阴影，别被窗口边缘裁掉 */
+.quick-shell {
+  padding: 10px;
+  display: block;
+  background: transparent;
+}
+
+/* 用 100% 而不是写死 360px：
+   窗口万一比面板窄，写死宽度会让面板左右被裁掉、圆角被切平、右侧 ✕ 看不见。 */
+.quick-shell .quick {
+  width: 100%;
+}
+
+/* 面板里的按钮必须 no-drag，否则被拖拽区吃掉点不动 */
+.quick-shell .quick button {
+  -webkit-app-region: no-drag;
+}
+/* 纯拖动区域：把手 + 周条 */
+.quick-shell .qgrab,
+.quick-shell .qstrip {
+  -webkit-app-region: drag;
+}
+.quick-shell .qstrip button {
+  -webkit-app-region: no-drag;
+}
+
+/* ============================================================
+ * 拖动把手
+ * 无边框窗口必须自己给一块 -webkit-app-region: drag 的区域，否则拖不动。
+ * 把手本身是 drag，里面的 ✕ 按钮要显式 no-drag 才能点。
+ * ========================================================== */
+
+.qgrab {
+  position: relative;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  border-bottom: calc(var(--bw) * 0.5) solid var(--line-2);
+  -webkit-app-region: drag;
+  cursor: grab;
+  flex: 0 0 auto;
+}
+.qgrab:active {
+  cursor: grabbing;
+}
+
+.qgrip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  pointer-events: none;
+}
+.qgrip i {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--line-2);
+  display: block;
+}
+html[data-theme='neo'] .qgrip i {
+  background: var(--muted);
+  opacity: 0.55;
+}
+
+.qclose {
+  position: absolute;
+  right: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 9px;
+  line-height: 1;
+  color: var(--muted);
+  -webkit-app-region: no-drag;
+  transition: background 0.14s, color 0.14s;
+}
+.qclose:hover {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+/* ============================================================
+ * 浮窗外投影
+ * 铁律：浮窗是「透明地浮在任意桌面内容上」，没有同色底可以贴合。
+ * 所以外阴影只能用暗侧，绝不能带白色/浅色外发光 ——
+ * 新拟物那套 `-10px -10px 24px rgba(255,255,255,.95)` 在深色桌面上
+ * 会变成一圈扎眼的光带。
+ *
+ * 内侧的 insets 不受影响（它们贴在面板自己的表面色上）。
+ * ========================================================== */
+
+html[data-theme='neo'] .quick-shell .quick {
+  box-shadow:
+    10px 10px 26px rgba(72, 68, 108, 0.42),
+    0 1px 4px rgba(72, 68, 108, 0.26),
+    0 16px 40px -18px rgba(50, 46, 82, 0.55);
+}
+
+/* organic 的外阴影本来就只有暗侧，这里再收一收，让它在浅色桌面上也别发白发灰 */
+html[data-theme='organic'] .quick-shell .quick {
+  box-shadow:
+    0 12px 28px -14px rgba(74, 60, 38, 0.5),
+    0 2px 6px rgba(74, 60, 38, 0.16);
+}
+
+/* brutal 保留硬投影（那是它的识别特征），只是别太薄，免得在深色底上糊掉 */
+html[data-theme='brutal'] .quick-shell .quick {
+  box-shadow: 7px 7px 0 var(--line);
+}
+/* ============================================================
+ * 浮窗外观微调
+ * 1) 去掉外围描边 —— 面板浮在桌面上，一圈亮线只会让它像"贴了张纸"
+ * 2) 把间距放松一点，现在太挤
+ * 全部 scope 到 .quick-shell，只影响真浮窗，不影响主窗口的预览页
+ * ========================================================== */
+
+/* 1) 描边：三套皮肤一律不要；有机 / 新拟物改成明显的圆角矩形 */
+.quick-shell .quick {
+  border: 0 !important;
+  border-radius: 30px !important;
+}
+html[data-theme='brutal'] .quick-shell .quick {
+  border-radius: 0 !important;
+}
+html[data-theme='neo'] .quick-shell .quick {
+  border-radius: 34px !important;
+}
+
+/* 顶部拖动条不要底色 —— 有底色会被切成「三条横带」，
+   看起来就不像一个完整的圆角矩形了。保留 ••• 抓手和 ✕ 就够辨识。 */
+html[data-theme='organic'] .quick-shell .qgrab,
+html[data-theme='neo'] .quick-shell .qgrab {
+  background: transparent;
+}
+
+/* 2) 拖动把手：加高到 22px，抓起来更顺手；圆点也明显一点 */
+.quick-shell .qgrab {
+  height: 22px;
+}
+.quick-shell .qgrip {
+  gap: 3.5px;
+}
+.quick-shell .qgrip i {
+  width: 3.5px;
+  height: 3.5px;
+}
+.quick-shell .qclose {
+  width: 18px;
+  height: 18px;
+  right: 4px;
+  font-size: 10px;
+}
+
+/* 3) 周条：日期和星期之间松一口气 */
+.quick-shell .qstrip {
+  border-bottom: 0;
+}
+.quick-shell .qday {
+  gap: 2px;
+  padding: 7px 0 5px;
+  border-right: 0;
+}
+.quick-shell .qday b {
+  font-size: 12px;
+}
+.quick-shell .qday span {
+  font-size: 8.5px;
+}
+.quick-shell .qday i {
+  width: 3.5px;
+  height: 3.5px;
+  margin-top: 2px;
+}
+.quick-shell .qadd {
+  width: 22px;
+  height: 22px;
+  margin: 0 8px 0 4px;
+  font-size: 13px;
+}
+
+/* 周条和列表之间用一层很淡的底色差分开，不用线 */
+.quick-shell .qlist {
+  background: var(--surface);
+  box-shadow: inset 0 1px 0 var(--line-2);
+}
+
+/* 4) 行：行高放松，勾选框和文字对齐 */
+.quick-shell .qrow {
+  gap: 11px;
+  padding: 10px 15px;
+}
+.quick-shell .qcheck {
+  width: 15px;
+  height: 15px;
+}
+.quick-shell .qt {
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+.quick-shell .qm {
+  font-size: 10.5px;
+  line-height: 1.35;
+  margin-top: 1px;
+}
+.quick-shell .qtag {
+  font-size: 9px;
+  padding: 2px 7px;
+}
+
+/* 行之间也不用线，靠 hover 底色区分 */
+.quick-shell .qrow + .qrow {
+  box-shadow: none;
+}
+
+/* 5) 底栏：和上面拉开，字稍微大一点 */
+.quick-shell .qfoot {
+  gap: 10px;
+  padding: 8px 15px 10px;
+  font-size: 9.5px;
+  border-top: 0;
+  box-shadow: inset 0 1px 0 var(--line-2);
+}
+
+/* 6) 空态也跟着松一点 */
+.quick-shell .qempty {
+  padding: 26px 15px;
+  font-size: 11.5px;
+}
+/* 圆角变大后，✕ 要往里让一点，否则会贴着弧线甚至被裁掉 */
+html[data-theme='organic'] .quick-shell .qgrab,
+html[data-theme='neo'] .quick-shell .qgrab {
+  height: 26px;
+}
+html[data-theme='organic'] .quick-shell .qclose,
+html[data-theme='neo'] .quick-shell .qclose {
+  right: 12px;
+  top: 8px;
+  transform: none;
+}
+/* 抓手点也往下一点，落在视觉重心上 */
+html[data-theme='organic'] .quick-shell .qgrip,
+html[data-theme='neo'] .quick-shell .qgrip {
+  transform: translateY(3px);
+}
+/* ============================================================
+ * 「还有 N 张」提示行
+ * 浮窗最多显示 4 行，超出部分不能默默吞掉
+ * ========================================================== */
+
+.quick-shell .qmore {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  padding: 8px 15px 9px;
+  font-family: var(--font-label);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  background: transparent;
+  transition: background 0.14s, color 0.14s;
+}
+.quick-shell .qmore:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+html[data-theme='brutal'] .quick-shell .qmore {
+  font-size: 10.5px;
+}
+html[data-theme='brutal'] .quick-shell .qmore:hover {
+  background: var(--accent-soft);
+}
+html[data-theme='neo'] .quick-shell .qmore:hover {
+  background: var(--surface-2);
+}
+/* 浮窗里的撤销条：浮在底栏（qfoot，约 38px）之上 */
+.quick-body .toast {
+  bottom: 50px;
+  width: max-content;
+  max-width: calc(100% - 44px);
+  padding: 7px 8px 7px 12px;
+}
+.quick-body .toast-text {
+  font-size: 11.5px;
+}
+/* ============================================================
+ * 浮窗输入行：按一下就能挂，不用切回主窗口
+ * ========================================================== */
+
+.quick-shell .qinput {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 9px;
+  background: var(--surface);
+  box-shadow: inset 0 1px 0 var(--line-2);
+}
+
+.quick-shell .qinput-mark {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--accent-ink);
+  background: var(--accent);
+}
+html[data-theme='brutal'] .quick-shell .qinput-mark {
+  border-radius: 0;
+}
+html[data-theme='neo'] .quick-shell .qinput-mark {
+  box-shadow: 2px 2px 5px rgba(108, 105, 242, 0.35);
+}
+
+.quick-shell .qinput-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  outline: none;
+  padding: 3px 0;
+  user-select: text;
+  -webkit-app-region: no-drag;
+}
+.quick-shell .qinput-field::placeholder {
+  color: var(--muted);
+}
+html[data-theme='brutal'] .quick-shell .qinput-field {
+  font-family: var(--font-label);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+}
+
+/* 输入行左侧给一条强调色，提示"这里可以动手" */
+.quick-shell .qinput:focus-within {
+  box-shadow: inset 3px 0 0 var(--accent), inset 0 1px 0 var(--line-2);
+}
+
+.quick-shell .qinput-go {
+  flex: 0 0 auto;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  animation: qgo-in 0.14s var(--ease-out);
+}
+html[data-theme='brutal'] .quick-shell .qinput-go {
+  border-radius: 0;
+}
+html[data-theme='neo'] .quick-shell .qinput-go {
+  box-shadow: 3px 3px 8px rgba(108, 105, 242, 0.3);
+}
+
+@keyframes qgo-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+/* 浮窗底栏的同步指示（只在启用同步时出现） */
+.quick-shell .qsync {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-label);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.quick-shell .qsync-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.quick-shell .qsync.idle .qsync-dot {
+  background: #4d8a5c;
+}
+.quick-shell .qsync.syncing .qsync-dot {
+  background: #d69a3c;
+}
+.quick-shell .qsync.error .qsync-dot {
+  background: var(--warn);
+}
+.quick-shell .qsync.error {
+  color: var(--warn);
+}

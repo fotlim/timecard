@@ -1,0 +1,28 @@
+{
+  "name": "timecard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "挂卡时间轴 — 把要做的事，挂在时间上。",
+  "packageManager": "pnpm@11.28.5",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r --if-present typecheck",
+    "build": "pnpm -r --if-present build",
+    "dev": "pnpm -r --parallel --if-present dev",
+    "test": "pnpm -r --if-present test",
+    "clean": "pnpm -r --if-present clean",
+    "dist": "pnpm --filter @timecard/desktop dist",
+    "pack": "pnpm --filter @timecard/desktop dist:dir",
+    "server": "pnpm --filter @timecard/server build && node apps/server/dist/node.js",
+    "server:test": "pnpm --filter @timecard/server test",
+    "mobile": "pnpm --filter @timecard/mobile dev",
+    "mobile:build": "pnpm --filter @timecard/mobile build",
+    "mobile:sync": "pnpm --filter @timecard/mobile build && cd apps/mobile && npx cap sync android"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

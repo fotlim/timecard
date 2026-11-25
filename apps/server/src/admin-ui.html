@@ -1,0 +1,2812 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>挂卡时间轴 · 同步控制台</title>
+    <style>
+      /* ============================================================
+       * 设计 token —— 沿用应用「自然有机」的米纸底 + 森林绿，
+       * 但做成中性的监控台配色，并配一套深色。
+       * ========================================================== */
+      :root {
+        --bg: #f3f1ea;
+        --bg-g1: rgba(113, 128, 90, 0.12);
+        --bg-g2: rgba(198, 168, 120, 0.12);
+        --surface: #fffdf9;
+        --surface-2: #f8f5ee;
+        --surface-3: #f0ece1;
+        --ink: #28251f;
+        --ink-2: #4b463b;
+        --muted: #8b8476;
+        --line: rgba(60, 50, 30, 0.12);
+        --line-2: rgba(60, 50, 30, 0.2);
+        --accent: #5f7a4f;
+        --accent-2: #71805a;
+        --accent-ink: #fbfdf7;
+        --accent-soft: #e6ecdb;
+        --ok: #4d8a5c;
+        --ok-soft: #e2efe3;
+        --warn: #b0801f;
+        --warn-soft: #f6ead0;
+        --danger: #bf5138;
+        --danger-soft: #f7e0d9;
+        --info: #4472a0;
+        --info-soft: #e2ecf6;
+        --radius: 16px;
+        --radius-sm: 11px;
+        --radius-lg: 22px;
+        --shadow: 0 1px 2px rgba(40, 32, 18, 0.05), 0 14px 34px -22px rgba(60, 45, 20, 0.45);
+        --shadow-sm: 0 1px 2px rgba(40, 32, 18, 0.07);
+        --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei",
+          "Noto Sans SC", system-ui, sans-serif;
+        --mono: "SFMono-Regular", ui-monospace, "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+      }
+      html[data-theme="dark"] {
+        --bg: #101316;
+        --bg-g1: rgba(113, 128, 90, 0.16);
+        --bg-g2: rgba(74, 127, 181, 0.1);
+        --surface: #191d22;
+        --surface-2: #1f242b;
+        --surface-3: #252b33;
+        --ink: #eef1f4;
+        --ink-2: #c6ccd4;
+        --muted: #8b94a1;
+        --line: rgba(255, 255, 255, 0.09);
+        --line-2: rgba(255, 255, 255, 0.16);
+        --accent: #8db377;
+        --accent-2: #8db377;
+        --accent-ink: #12160f;
+        --accent-soft: rgba(141, 179, 119, 0.16);
+        --ok: #6cbf83;
+        --ok-soft: rgba(108, 191, 131, 0.14);
+        --warn: #e0b45e;
+        --warn-soft: rgba(224, 180, 94, 0.14);
+        --danger: #e58670;
+        --danger-soft: rgba(229, 134, 112, 0.15);
+        --info: #7aa9d6;
+        --info-soft: rgba(122, 169, 214, 0.15);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 40px -24px rgba(0, 0, 0, 0.75);
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: var(--font);
+        color: var(--ink);
+        background-color: var(--bg);
+        background-image: radial-gradient(1000px 520px at 8% -10%, var(--bg-g1), transparent 60%),
+          radial-gradient(900px 520px at 92% 0%, var(--bg-g2), transparent 62%);
+        background-attachment: fixed;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+        line-height: 1.5;
+      }
+      ::selection {
+        background: var(--accent-soft);
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .mono {
+        font-family: var(--mono);
+        font-variant-numeric: tabular-nums;
+      }
+      button {
+        font-family: inherit;
+        cursor: pointer;
+      }
+      a {
+        color: var(--accent-2);
+      }
+
+      /* ---------- 品牌小图腾 ---------- */
+      .fish {
+        display: inline-block;
+        color: var(--accent);
+        line-height: 0;
+      }
+      .fish svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      /* ============================================================
+       * 令牌门
+       * ========================================================== */
+      .gate {
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+      .gate-card {
+        width: 100%;
+        max-width: 380px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow);
+        padding: 30px 28px 24px;
+      }
+      .gate-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .gate-brand .fish {
+        width: 42px;
+        height: 42px;
+        padding: 8px;
+        background: var(--accent-soft);
+        border-radius: 13px;
+      }
+      .gate-brand h1 {
+        font-size: 17px;
+        font-weight: 650;
+        margin: 0;
+        letter-spacing: 0.01em;
+      }
+      .gate-brand p {
+        margin: 1px 0 0;
+        font-size: 12.5px;
+        color: var(--muted);
+      }
+      .gate-live {
+        margin: 20px 0 22px;
+        padding: 11px 14px;
+        border-radius: var(--radius-sm);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        font-size: 12.5px;
+        color: var(--ink-2);
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+      .gate-form label {
+        display: block;
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-bottom: 7px;
+        letter-spacing: 0.02em;
+      }
+      .gate-input {
+        position: relative;
+        display: flex;
+        gap: 8px;
+      }
+      .gate-input input {
+        flex: 1;
+        min-width: 0;
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--ink);
+        background: var(--surface-2);
+        border: 1px solid var(--line-2);
+        border-radius: var(--radius-sm);
+        padding: 11px 13px;
+        outline: none;
+        transition: border-color 0.15s, box-shadow 0.15s;
+      }
+      .gate-input input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+      }
+      .gate-eye {
+        flex: 0 0 auto;
+        border: 1px solid var(--line-2);
+        background: var(--surface-2);
+        color: var(--muted);
+        border-radius: var(--radius-sm);
+        padding: 0 13px;
+        font-size: 12.5px;
+      }
+      .gate-eye:hover {
+        color: var(--ink);
+      }
+      .gate-hint {
+        font-size: 12px;
+        color: var(--muted);
+        margin: 14px 0 0;
+        min-height: 17px;
+        line-height: 1.45;
+      }
+      .gate-hint.err {
+        color: var(--danger);
+      }
+
+      /* ---------- 通用按钮 ---------- */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border: 1px solid var(--line-2);
+        background: var(--surface-2);
+        color: var(--ink);
+        border-radius: var(--radius-sm);
+        padding: 9px 14px;
+        font-size: 13px;
+        font-weight: 550;
+        transition: transform 0.06s, background 0.15s, border-color 0.15s, color 0.15s;
+        white-space: nowrap;
+      }
+      .btn:hover {
+        border-color: var(--accent);
+        color: var(--accent-2);
+      }
+      .btn:active {
+        transform: translateY(1px);
+      }
+      .btn.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--accent-ink);
+      }
+      .btn.primary:hover {
+        filter: brightness(1.05);
+        color: var(--accent-ink);
+      }
+      .btn.ghost {
+        background: transparent;
+        border-color: transparent;
+      }
+      .btn.ghost:hover {
+        background: var(--surface-2);
+      }
+      .btn.danger {
+        border-color: transparent;
+        background: var(--danger-soft);
+        color: var(--danger);
+      }
+      .btn.danger:hover {
+        background: var(--danger);
+        color: #fff;
+      }
+      .btn.block {
+        width: 100%;
+        margin-top: 16px;
+        padding: 11px 14px;
+      }
+      .btn.sm {
+        padding: 6px 11px;
+        font-size: 12.5px;
+        border-radius: 9px;
+      }
+      .btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      /* ============================================================
+       * 主框架
+       * ========================================================== */
+      .shell {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 18px clamp(14px, 3vw, 32px) 64px;
+      }
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 10px 2px 14px;
+        backdrop-filter: blur(10px);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        min-width: 0;
+      }
+      .brand .fish {
+        width: 38px;
+        height: 38px;
+        flex: 0 0 auto;
+        padding: 7px;
+        background: var(--accent-soft);
+        border-radius: 12px;
+        color: var(--accent);
+      }
+      .brand-txt h1 {
+        margin: 0;
+        font-size: 15.5px;
+        font-weight: 660;
+        letter-spacing: 0.01em;
+        white-space: nowrap;
+      }
+      .brand-txt p {
+        margin: 0;
+        font-size: 11.5px;
+        color: var(--muted);
+        letter-spacing: 0.03em;
+      }
+      .grow {
+        flex: 1;
+      }
+      .live-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 11.5px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        color: var(--ok);
+        background: var(--ok-soft);
+        border: 1px solid transparent;
+        border-radius: 999px;
+        padding: 5px 11px 5px 9px;
+      }
+      .live-pill.down {
+        color: var(--danger);
+        background: var(--danger-soft);
+      }
+      /* 活着但一直有失败请求：黄，跟"断线"区分开 */
+      .live-pill.warn {
+        color: var(--warn);
+        background: var(--warn-soft);
+      }
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: currentColor;
+        flex: 0 0 auto;
+      }
+      .live-pill:not(.down) .dot {
+        animation: pulse 2s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 60%, transparent);
+          opacity: 1;
+        }
+        50% {
+          box-shadow: 0 0 0 4px transparent;
+          opacity: 0.55;
+        }
+      }
+      .icon-btn {
+        width: 36px;
+        height: 36px;
+        display: grid;
+        place-items: center;
+        border-radius: 11px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-2);
+        transition: color 0.15s, border-color 0.15s, background 0.15s;
+      }
+      .icon-btn:hover {
+        color: var(--accent-2);
+        border-color: var(--accent);
+      }
+      .icon-btn svg {
+        width: 17px;
+        height: 17px;
+      }
+
+      /* ============================================================
+       * Hero 状态条
+       * ========================================================== */
+      .hero {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 58%, var(--accent-soft) 140%);
+        box-shadow: var(--shadow-sm);
+        padding: 20px 22px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 18px 26px;
+        align-items: center;
+      }
+      .hero-state {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 0;
+      }
+      .hero-orb {
+        width: 46px;
+        height: 46px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: var(--ok-soft);
+        color: var(--ok);
+      }
+      .hero-orb svg {
+        width: 24px;
+        height: 24px;
+      }
+      .hero.down .hero-orb {
+        background: var(--danger-soft);
+        color: var(--danger);
+      }
+      /* 有失败请求但服务还活着：黄，不要用红吓人，也别装作没问题 */
+      .hero.warn .hero-orb {
+        background: var(--warn-soft);
+        color: var(--warn);
+      }
+      .hero-title {
+        font-size: 21px;
+        font-weight: 680;
+        letter-spacing: 0.01em;
+        line-height: 1.15;
+      }
+      .hero-sub {
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-top: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .hero-clock {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      .clock-time {
+        font-family: var(--mono);
+        font-size: 24px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        line-height: 1.1;
+      }
+      .clock-date {
+        font-size: 11.5px;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+      }
+      .hero-chips {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--ink-2);
+        background: color-mix(in srgb, var(--surface) 70%, transparent);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 5px 11px;
+      }
+      .chip b {
+        font-weight: 650;
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+      }
+      .chip .k {
+        color: var(--muted);
+      }
+      /*
+       * 原来这里有个「最近 30 分钟」火花图。删了：
+       * 这个服务的流量是稀疏脉冲，30 根 3px 的柱子基本看不出东西，
+       * 窄屏还会挤成一根杂线，反而像渲染错误。活跃度看「近一分钟」芯片就够了。
+       */
+
+      /* ============================================================
+       * 统计磁贴
+       * ========================================================== */
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 12px;
+        margin-top: 14px;
+      }
+      .stat {
+        position: relative;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+        padding: 14px 15px 13px;
+        overflow: hidden;
+      }
+      .stat::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 14px;
+        bottom: 14px;
+        width: 3px;
+        border-radius: 0 3px 3px 0;
+        background: var(--tone, var(--accent));
+      }
+      .stat-label {
+        font-size: 11.5px;
+        color: var(--muted);
+        letter-spacing: 0.05em;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .stat-label i {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--tone, var(--accent));
+        opacity: 0.75;
+      }
+      .stat-num {
+        margin-top: 7px;
+        font-size: 27px;
+        font-weight: 660;
+        letter-spacing: -0.01em;
+        font-variant-numeric: tabular-nums;
+        line-height: 1;
+      }
+      .stat-num.mono {
+        font-family: var(--mono);
+        font-size: 24px;
+      }
+      .stat-sub {
+        margin-top: 5px;
+        font-size: 11px;
+        color: var(--muted);
+        min-height: 14px;
+      }
+
+      /* ============================================================
+       * 主体两栏
+       * ========================================================== */
+      .main {
+        display: grid;
+        grid-template-columns: minmax(0, 1.85fr) minmax(290px, 1fr);
+        gap: 14px;
+        margin-top: 14px;
+        align-items: start;
+      }
+      .side {
+        display: grid;
+        gap: 14px;
+      }
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+      }
+      .panel-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 16px 12px;
+      }
+      .panel-title {
+        font-size: 13.5px;
+        font-weight: 650;
+        letter-spacing: 0.01em;
+      }
+      .panel-count {
+        font-size: 11.5px;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+      .panel-body {
+        padding: 0 16px 14px;
+      }
+
+      /* ---------- 卡片浏览器 ---------- */
+      .toolbar {
+        display: flex;
+        gap: 8px;
+        padding: 0 16px 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .search {
+        position: relative;
+        flex: 1 1 190px;
+        min-width: 150px;
+      }
+      .search svg {
+        position: absolute;
+        left: 11px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 15px;
+        height: 15px;
+        color: var(--muted);
+        pointer-events: none;
+      }
+      .search input {
+        width: 100%;
+        font-size: 13px;
+        color: var(--ink);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 8px 30px 8px 33px;
+        outline: none;
+        transition: border-color 0.15s, box-shadow 0.15s;
+      }
+      .search input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+      }
+      .filters {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .fchip {
+        border: 1px solid var(--line);
+        background: var(--surface-2);
+        color: var(--ink-2);
+        border-radius: 999px;
+        padding: 6px 11px;
+        font-size: 12.5px;
+        font-weight: 500;
+        transition: all 0.14s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .fchip b {
+        font-variant-numeric: tabular-nums;
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 11.5px;
+      }
+      .fchip:hover {
+        border-color: var(--accent);
+        color: var(--accent-2);
+      }
+      .fchip.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--accent-ink);
+      }
+      .fchip.active b {
+        color: color-mix(in srgb, var(--accent-ink) 80%, transparent);
+      }
+
+      .card-list {
+        display: flex;
+        flex-direction: column;
+      }
+      .crow {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        text-align: left;
+        background: transparent;
+        border: none;
+        border-top: 1px solid var(--line);
+        padding: 12px 16px;
+        color: inherit;
+        transition: background 0.12s;
+      }
+      .crow:first-child {
+        border-top: none;
+      }
+      .crow:hover {
+        background: var(--surface-2);
+      }
+      .crow-bar {
+        width: 4px;
+        align-self: stretch;
+        border-radius: 4px;
+        background: var(--muted);
+        flex: 0 0 auto;
+      }
+      .crow-main {
+        min-width: 0;
+        flex: 1;
+      }
+      .crow-title {
+        font-size: 14px;
+        font-weight: 560;
+        color: var(--ink);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .crow-title .tt {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .tag {
+        flex: 0 0 auto;
+        font-size: 10.5px;
+        color: var(--ink-2);
+        background: var(--surface-3);
+        border-radius: 6px;
+        padding: 1px 7px;
+        letter-spacing: 0.02em;
+      }
+      .crow-meta {
+        margin-top: 4px;
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        flex-wrap: wrap;
+      }
+      .crow-meta .sep {
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: var(--line-2);
+      }
+      .crow-right {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+        min-width: 74px;
+      }
+      .prog {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 11.5px;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+      .prog-track {
+        width: 52px;
+        height: 5px;
+        border-radius: 4px;
+        background: var(--surface-3);
+        overflow: hidden;
+      }
+      .prog-fill {
+        height: 100%;
+        border-radius: 4px;
+        background: var(--ok);
+        transition: width 0.4s;
+      }
+      .badge {
+        font-size: 10.5px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+      }
+      .badge.open {
+        color: var(--warn);
+        background: var(--warn-soft);
+      }
+      .badge.done {
+        color: var(--ok);
+        background: var(--ok-soft);
+      }
+      .badge.archived {
+        color: var(--muted);
+        background: var(--surface-3);
+      }
+      .badge.deleted {
+        color: var(--danger);
+        background: var(--danger-soft);
+      }
+
+      .empty {
+        padding: 34px 16px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .empty .fish {
+        width: 40px;
+        height: 40px;
+        opacity: 0.35;
+        margin-bottom: 8px;
+      }
+
+      .crow-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 16px;
+        border-top: 1px solid var(--line);
+        background: var(--surface-2);
+      }
+      .pager-info {
+        font-size: 12px;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+      .pager {
+        display: flex;
+        gap: 6px;
+      }
+
+      /* ============================================================
+       * 实时动态 + 设备
+       * ========================================================== */
+      .feed {
+        display: flex;
+        flex-direction: column;
+        max-height: 340px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+      }
+      .feed::-webkit-scrollbar {
+        width: 7px;
+      }
+      .feed::-webkit-scrollbar-thumb {
+        background: var(--line-2);
+        border-radius: 4px;
+      }
+      .evt {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 9px 2px;
+        border-top: 1px solid var(--line);
+      }
+      .evt:first-child {
+        border-top: none;
+      }
+      .evt-ico {
+        width: 26px;
+        height: 26px;
+        flex: 0 0 auto;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-size: 13px;
+        line-height: 1;
+      }
+      .evt-ico.push {
+        color: var(--ok);
+        background: var(--ok-soft);
+      }
+      .evt-ico.pull {
+        color: var(--info);
+        background: var(--info-soft);
+      }
+      .evt-ico.admin {
+        color: var(--warn);
+        background: var(--warn-soft);
+      }
+      .evt-main {
+        min-width: 0;
+        flex: 1;
+      }
+      .evt-line {
+        font-size: 12.5px;
+        color: var(--ink);
+        display: flex;
+        gap: 6px;
+        align-items: baseline;
+        flex-wrap: wrap;
+      }
+      .evt-dev {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--accent-2);
+        background: var(--accent-soft);
+        padding: 0 6px;
+        border-radius: 5px;
+        max-width: 130px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: inline-block;
+        vertical-align: bottom;
+      }
+      .evt-sub {
+        font-size: 11.5px;
+        color: var(--muted);
+        margin-top: 2px;
+        font-variant-numeric: tabular-nums;
+      }
+      .evt-time {
+        flex: 0 0 auto;
+        font-size: 11px;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+        padding-top: 1px;
+      }
+
+      /* 失败事件：必须一眼能认出来，别让它混在成功里 */
+      .evt-ico.fail {
+        color: var(--danger);
+        background: var(--danger-soft);
+      }
+      .evt.failed {
+        background: color-mix(in srgb, var(--danger-soft) 42%, transparent);
+        border-radius: 9px;
+      }
+      .evt-line .evt-fail-txt {
+        color: var(--danger);
+        font-weight: 600;
+      }
+
+      /* 动态筛选条 */
+      .feed-tools {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        flex-wrap: wrap;
+        padding: 0 0 10px;
+      }
+      .feed-tools .fchip {
+        padding: 4px 9px;
+        font-size: 11.5px;
+        gap: 4px;
+      }
+      .feed-tools .fchip b {
+        font-size: 10.5px;
+      }
+      .feed-dev {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        color: var(--accent-2);
+        background: var(--accent-soft);
+        border-radius: 999px;
+        padding: 3px 4px 3px 9px;
+        max-width: 190px;
+      }
+      .feed-dev b {
+        font-family: var(--mono);
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .feed-dev button {
+        border: none;
+        background: transparent;
+        color: inherit;
+        font-size: 12px;
+        line-height: 1;
+        padding: 2px 4px;
+        border-radius: 50%;
+      }
+      .feed-dev button:hover {
+        background: color-mix(in srgb, var(--accent-2) 18%, transparent);
+      }
+
+      .devices {
+        display: flex;
+        flex-direction: column;
+      }
+      .dev {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 6px;
+        margin: 0 -6px;
+        border-top: 1px solid var(--line);
+        width: calc(100% + 12px);
+        background: transparent;
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+        border-radius: 9px;
+        transition: background 0.12s;
+      }
+      .dev:first-child {
+        border-top: none;
+      }
+      .dev:hover {
+        background: var(--surface-2);
+      }
+      .dev.active {
+        background: var(--accent-soft);
+      }
+      .dev-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--line-2);
+        flex: 0 0 auto;
+      }
+      .dev-dot.on {
+        background: var(--ok);
+        box-shadow: 0 0 0 3px var(--ok-soft);
+      }
+      .dev-main {
+        min-width: 0;
+        flex: 1;
+      }
+      .dev-name {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--ink);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .dev-meta {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 2px;
+        font-variant-numeric: tabular-nums;
+      }
+      .dev-fail {
+        color: var(--danger);
+        font-weight: 600;
+      }
+      .dev-plat {
+        flex: 0 0 auto;
+        font-size: 10px;
+        letter-spacing: 0.05em;
+        color: var(--muted);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 1px 6px;
+      }
+      .dev-plat.panel {
+        color: var(--accent-2);
+        border-color: color-mix(in srgb, var(--accent-2) 45%, transparent);
+      }
+
+      /* 搜索框清除按钮 */
+      .search-clear {
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1;
+        padding: 4px 6px;
+        border-radius: 6px;
+      }
+      .search-clear:hover {
+        color: var(--ink);
+        background: var(--surface-3);
+      }
+
+      /* ============================================================
+       * 抽屉
+       * ========================================================== */
+      .drawer {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+      }
+      .drawer-veil {
+        position: absolute;
+        inset: 0;
+        background: rgba(20, 16, 8, 0.42);
+        opacity: 0;
+        transition: opacity 0.22s;
+        backdrop-filter: blur(1.5px);
+      }
+      .drawer.open .drawer-veil {
+        opacity: 1;
+      }
+      .drawer-panel {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: min(460px, 100%);
+        background: var(--surface);
+        border-left: 1px solid var(--line);
+        box-shadow: -20px 0 60px -30px rgba(0, 0, 0, 0.5);
+        transform: translateX(100%);
+        transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+        display: flex;
+        flex-direction: column;
+      }
+      .drawer.open .drawer-panel {
+        transform: translateX(0);
+      }
+      .drawer-head {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 18px 20px 14px;
+        border-bottom: 1px solid var(--line);
+      }
+      .drawer-head .dh-main {
+        min-width: 0;
+        flex: 1;
+      }
+      .drawer-head h2 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 660;
+        line-height: 1.3;
+        word-break: break-word;
+      }
+      .drawer-head .dh-sub {
+        margin-top: 5px;
+        display: flex;
+        gap: 7px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .drawer-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 18px 20px 26px;
+      }
+      .dsec {
+        margin-bottom: 20px;
+      }
+      .dsec > h3 {
+        margin: 0 0 10px;
+        font-size: 11.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 650;
+      }
+      .kv {
+        display: grid;
+        grid-template-columns: 84px 1fr;
+        gap: 8px 12px;
+        font-size: 12.5px;
+      }
+      .kv dt {
+        color: var(--muted);
+      }
+      .kv dd {
+        margin: 0;
+        color: var(--ink);
+        word-break: break-all;
+      }
+      .kv dd.mono {
+        font-family: var(--mono);
+        font-size: 11.5px;
+      }
+      .items {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .item-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        font-size: 13px;
+        padding: 6px 0;
+        border-top: 1px dashed var(--line);
+      }
+      .item-row:first-child {
+        border-top: none;
+      }
+      .item-box {
+        width: 15px;
+        height: 15px;
+        border-radius: 4px;
+        border: 1.5px solid var(--line-2);
+        flex: 0 0 auto;
+        margin-top: 2px;
+        display: grid;
+        place-items: center;
+      }
+      .item-box.on {
+        background: var(--ok);
+        border-color: var(--ok);
+        color: #fff;
+      }
+      .item-box.on svg {
+        width: 10px;
+        height: 10px;
+      }
+      .item-row.done .item-text {
+        color: var(--muted);
+        text-decoration: line-through;
+      }
+      .json-box {
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 11px 12px;
+        font-family: var(--mono);
+        font-size: 11px;
+        line-height: 1.55;
+        color: var(--ink-2);
+        max-height: 240px;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .dact {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 4px;
+      }
+
+      /* ============================================================
+       * Toast
+       * ========================================================== */
+      .toasts {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        z-index: 90;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        align-items: flex-end;
+        pointer-events: none;
+      }
+      .toast {
+        pointer-events: auto;
+        background: var(--ink);
+        color: var(--surface);
+        font-size: 13px;
+        padding: 10px 15px;
+        border-radius: 11px;
+        box-shadow: var(--shadow);
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+        transition: opacity 0.24s, transform 0.24s;
+        max-width: 320px;
+      }
+      .toast.in {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      .toast.ok {
+        background: var(--ok);
+        color: #fff;
+      }
+      .toast.err {
+        background: var(--danger);
+        color: #fff;
+      }
+
+      .foot {
+        margin-top: 26px;
+        text-align: center;
+        font-size: 11.5px;
+        color: var(--muted);
+        letter-spacing: 0.02em;
+      }
+      .foot .fish {
+        width: 15px;
+        height: 15px;
+        vertical-align: -3px;
+        color: var(--accent);
+        opacity: 0.8;
+        margin: 0 3px;
+      }
+
+      /* ============================================================
+       * 响应式
+       * ========================================================== */
+      @media (max-width: 1060px) {
+        .stats {
+          grid-template-columns: repeat(3, 1fr);
+        }
+        .main {
+          grid-template-columns: 1fr;
+        }
+        .side {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 680px) {
+        .stats {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+        }
+        .side {
+          grid-template-columns: 1fr;
+        }
+        .hero {
+          grid-template-columns: 1fr;
+          gap: 14px;
+        }
+        .hero-clock {
+          text-align: left;
+          display: flex;
+          align-items: baseline;
+          gap: 10px;
+        }
+        .clock-time {
+          font-size: 20px;
+        }
+        .brand-txt h1 {
+          font-size: 14px;
+        }
+        .live-pill .lp-text {
+          display: none;
+        }
+        .crow-right {
+          min-width: 58px;
+        }
+        .crow-title .tag {
+          display: none;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation: none !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ===================== 令牌门 ===================== -->
+    <div id="gate" class="gate">
+      <div class="gate-card">
+        <div class="gate-brand">
+          <span class="fish" id="gate-fish"></span>
+          <div>
+            <h1>挂卡时间轴</h1>
+            <p>同步服务 · 控制台</p>
+          </div>
+        </div>
+        <div class="gate-live" id="gate-live">
+          <span class="dot" style="background: var(--muted)"></span>
+          <span>正在探测服务器…</span>
+        </div>
+        <form class="gate-form" id="gate-form" autocomplete="off">
+          <label for="gate-token">访问令牌</label>
+          <div class="gate-input">
+            <input id="gate-token" type="password" placeholder="粘贴服务器令牌…" spellcheck="false" />
+            <button type="button" class="gate-eye" id="gate-eye">显示</button>
+          </div>
+          <button type="submit" class="btn primary block" id="gate-submit">进入控制台</button>
+        </form>
+        <p class="gate-hint" id="gate-hint">令牌只保存在这台设备的浏览器里。</p>
+      </div>
+    </div>
+
+    <!-- ===================== 主应用 ===================== -->
+    <div id="app" class="shell" hidden>
+      <header class="topbar">
+        <div class="brand">
+          <span class="fish" id="top-fish"></span>
+          <div class="brand-txt">
+            <h1>挂卡时间轴</h1>
+            <p>同步服务控制台</p>
+          </div>
+        </div>
+        <div class="grow"></div>
+        <span class="live-pill" id="live-pill">
+          <span class="dot"></span><span class="lp-text">LIVE</span>
+        </span>
+        <button class="icon-btn" id="btn-theme" title="切换深/浅色" aria-label="切换主题"></button>
+        <button class="icon-btn" id="btn-logout" title="退出（清除本机令牌）" aria-label="退出"></button>
+      </header>
+
+      <section class="hero" id="hero">
+        <div class="hero-state">
+          <div class="hero-orb" id="hero-orb"></div>
+          <div style="min-width: 0">
+            <div class="hero-title" id="hero-title">运行正常</div>
+            <div class="hero-sub" id="hero-sub">正在读取服务状态…</div>
+          </div>
+        </div>
+        <div class="hero-clock">
+          <div class="clock-time" id="clock">--:--:--</div>
+          <div class="clock-date" id="clock-date"></div>
+        </div>
+        <div class="hero-chips" id="hero-chips"></div>
+      </section>
+
+      <section class="stats" id="stats"></section>
+
+      <div class="main">
+        <section class="panel">
+          <div class="panel-head">
+            <span class="panel-title">卡片</span>
+            <span class="panel-count" id="cards-count"></span>
+            <div class="grow"></div>
+            <button class="btn sm ghost" id="btn-refresh" title="刷新">刷新</button>
+          </div>
+          <div class="toolbar">
+            <div class="search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <circle cx="11" cy="11" r="7"></circle>
+                <path d="m20 20-3.5-3.5"></path>
+              </svg>
+              <input id="search" type="search" placeholder="搜索标题…" aria-label="搜索卡片标题" />
+              <button class="search-clear" id="search-clear" type="button" hidden aria-label="清空搜索">✕</button>
+            </div>
+            <div class="filters" id="filters"></div>
+          </div>
+          <div class="card-list" id="card-list"></div>
+          <div class="crow-foot">
+            <span class="pager-info" id="pager-info"></span>
+            <div class="pager">
+              <button class="btn sm" id="prev" title="上一页">上一页</button>
+              <button class="btn sm" id="next" title="下一页">下一页</button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="side">
+          <section class="panel">
+            <div class="panel-head">
+              <span class="panel-title">实时动态</span>
+              <div class="grow"></div>
+              <span class="panel-count" id="feed-count"></span>
+            </div>
+            <div class="panel-body">
+              <div class="feed-tools" id="feed-tools"></div>
+              <div class="feed" id="feed" aria-live="polite" aria-relevant="additions"></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <span class="panel-title">设备</span>
+              <div class="grow"></div>
+              <span class="panel-count" id="dev-count"></span>
+            </div>
+            <div class="panel-body">
+              <div class="devices" id="devices"></div>
+            </div>
+          </section>
+        </aside>
+      </div>
+
+      <footer class="foot">
+        <span id="foot-version">挂卡时间轴同步服务</span> · <span class="fish" id="foot-fish"></span> 用 SQLite 喂饱 · <a href="/api/admin/export" id="export-link">导出全部</a>
+      </footer>
+    </div>
+
+    <!-- ===================== 抽屉 ===================== -->
+    <div id="drawer" class="drawer" hidden>
+      <div class="drawer-veil" data-close="1"></div>
+      <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="dt-title" id="dt-panel">
+        <div class="drawer-head">
+          <div class="dh-main">
+            <h2 id="dt-title">卡片</h2>
+            <div class="dh-sub" id="dt-sub"></div>
+          </div>
+          <button class="icon-btn" id="dt-close" aria-label="关闭">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M6 6l12 12M18 6L6 18"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="drawer-body" id="dt-body"></div>
+      </div>
+    </div>
+
+    <div class="toasts" id="toasts"></div>
+
+    <script>
+      "use strict";
+
+      /* ============================================================
+       * 小工具
+       * ========================================================== */
+      const $ = (sel, root) => (root || document).querySelector(sel);
+      const $$ = (sel, root) => Array.prototype.slice.call((root || document).querySelectorAll(sel));
+      const LS_TOKEN = "timecard.console.token";
+      const LS_THEME = "timecard.console.theme";
+
+      const FISH_SVG =
+        '<svg viewBox="0 0 40 28" aria-hidden="true">' +
+        '<path d="M12 14 L2 5 L4.5 14 L2 23 Z" fill="currentColor"/>' +
+        '<ellipse cx="23" cy="14" rx="13.5" ry="9.5" fill="currentColor"/>' +
+        '<circle cx="29.5" cy="10.5" r="1.9" fill="var(--surface)"/>' +
+        "</svg>";
+
+      function esc(v) {
+        return String(v == null ? "" : v).replace(/[&<>"']/g, function (m) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m];
+        });
+      }
+      function safeColor(c) {
+        return /^#[0-9a-fA-F]{3,8}$/.test(String(c || "")) ? c : "#71805a";
+      }
+      function pad2(n) {
+        return String(n).padStart(2, "0");
+      }
+      function fmtBytes(n) {
+        if (n == null || isNaN(n)) return "—";
+        if (n < 1024) return n + " B";
+        const u = ["KB", "MB", "GB", "TB"];
+        let i = -1;
+        do {
+          n /= 1024;
+          i += 1;
+        } while (n >= 1024 && i < u.length - 1);
+        return n.toFixed(n >= 100 ? 0 : 1) + " " + u[i];
+      }
+      function fmtDur(ms) {
+        if (ms == null || isNaN(ms)) return "—";
+        if (ms < 1000) return ms + " 毫秒";
+        let s = Math.floor(ms / 1000);
+        const d = Math.floor(s / 86400);
+        s -= d * 86400;
+        const h = Math.floor(s / 3600);
+        s -= h * 3600;
+        const m = Math.floor(s / 60);
+        s -= m * 60;
+        const out = [];
+        if (d) out.push(d + " 天");
+        if (h) out.push(h + " 小时");
+        if (m && !d) out.push(m + " 分");
+        if (!d && !h) out.push(s + " 秒");
+        return out.join(" ");
+      }
+      function relTime(ts) {
+        if (!ts) return "—";
+        const s = Math.round((Date.now() - ts) / 1000);
+        if (s <= 1) return "刚刚";
+        if (s < 60) return s + " 秒前";
+        const m = Math.round(s / 60);
+        if (m < 60) return m + " 分钟前";
+        const h = Math.round(m / 60);
+        if (h < 24) return h + " 小时前";
+        const d = Math.round(h / 24);
+        if (d < 30) return d + " 天前";
+        return new Date(ts).toLocaleDateString("zh-CN");
+      }
+      function fmtDateTime(ts) {
+        if (ts == null) return "—";
+        const d = new Date(ts);
+        return (
+          d.getFullYear() +
+          "-" +
+          pad2(d.getMonth() + 1) +
+          "-" +
+          pad2(d.getDate()) +
+          " " +
+          pad2(d.getHours()) +
+          ":" +
+          pad2(d.getMinutes())
+        );
+      }
+      function shortId(id) {
+        const s = String(id || "");
+        return s.length > 13 ? s.slice(0, 8) + "…" + s.slice(-3) : s || "—";
+      }
+      function guessPlatform(ua, deviceId) {
+        // 面板自己发起的操作有固定前缀，不用猜
+        if (String(deviceId || "").indexOf("panel@") === 0) return "面板";
+        // 没有 UA 就别硬猜成 Web —— 服务端 fetch 本来就不总带这个头
+        if (!ua) return "";
+        const s = ua.toLowerCase();
+        if (s.indexOf("android") >= 0) return "Android";
+        if (s.indexOf("iphone") >= 0 || s.indexOf("ipad") >= 0) return "iOS";
+        if (s.indexOf("electron") >= 0) return "桌面";
+        if (s.indexOf("undici") >= 0 || s.indexOf("node") >= 0) return "服务端";
+        if (s.indexOf("mobile") >= 0) return "移动";
+        return "Web";
+      }
+
+      /** 服务端失败码 → 人话。面板上不该出现 invalid_changes 这种给机器看的东西 */
+      function describeServerError(code) {
+        const map = {
+          unauthorized: "令牌不正确或已失效",
+          invalid_json: "请求体不是合法 JSON",
+          invalid_body: "请求体结构不对",
+          missing_device_id: "缺少 deviceId",
+          changes_must_be_array: "changes 不是数组",
+          batch_too_large: "单批超过 50 条",
+          invalid_changes: "卡片字段不合法",
+          payload_too_large: "请求体超过 1 MB",
+          invalid_since: "游标参数非法",
+          invalid_limit: "limit 参数非法",
+          stale_write: "服务端已有更新版本",
+          not_found: "目标不存在"
+        };
+        return map[code] || code || "未知错误";
+      }
+
+      /* ============================================================
+       * HTTP
+       * ========================================================== */
+      let token = localStorage.getItem(LS_TOKEN) || "";
+      let authed = false;
+      let pendingCard = null;
+
+      async function api(path, opts) {
+        opts = opts || {};
+        const headers = Object.assign({}, opts.headers || {});
+        if (token) headers["Authorization"] = "Bearer " + token;
+        if (opts.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
+        const res = await fetch(path, Object.assign({}, opts, { headers: headers }));
+        if (res.status === 401) {
+          const e = new Error("unauthorized");
+          e.code = 401;
+          throw e;
+        }
+        if (!res.ok) {
+          let msg = "HTTP " + res.status;
+          try {
+            const j = await res.json();
+            if (j && j.error) msg = j.error;
+          } catch (e) {}
+          const err = new Error(msg);
+          err.code = res.status;
+          throw err;
+        }
+        return res.json();
+      }
+      function post(path, body) {
+        return api(path, { method: "POST", body: body ? JSON.stringify(body) : undefined });
+      }
+
+      /* ============================================================
+       * 状态
+       * ========================================================== */
+      const S = {
+        overview: null,
+        cards: [],
+        total: 0,
+        filter: { status: "all", q: "" },
+        /** 动态筛：按事件类型 + 按设备（点设备卡片切换） */
+        feed: { kind: "all", device: null },
+        offset: 0,
+        limit: 12,
+        events: [],
+        lastEventId: 0,
+        devices: [],
+        clockOffset: 0,
+        selected: null,
+        lastFocus: null,
+        timers: [],
+        alive: true
+      };
+
+      const STAT_DEFS = [
+        { key: "total", label: "总卡片", tone: "var(--accent)", sub: "含墓碑" },
+        { key: "open", label: "进行中", tone: "var(--warn)", sub: "还没勾完" },
+        { key: "done", label: "已完成", tone: "var(--ok)", sub: "全部勾完" },
+        { key: "archived", label: "已归档", tone: "var(--muted)", sub: "从轴上摘下" },
+        { key: "deleted", label: "墓碑", tone: "var(--danger)", sub: "软删除" },
+        { key: "maxSeq", label: "游标 seq", tone: "var(--info)", sub: "增量水位", mono: true }
+      ];
+
+      const STATUS_LABEL = { open: "进行中", done: "已完成", archived: "已归档", deleted: "已删除" };
+
+      /* ============================================================
+       * 主题
+       * ========================================================== */
+      const ICON_SUN =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/></svg>';
+      const ICON_MOON =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg>';
+      const ICON_OUT =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 12H3m0 0 3.5-3.5M3 12l3.5 3.5"/></svg>';
+      const ICON_CHECK =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m4 12 5 5L20 6"/></svg>';
+      const ICON_HEART =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-9.4A3.6 3.6 0 0 1 12 7a3.6 3.6 0 0 1 7 3.6C19 15.6 12 20 12 20Z"/></svg>';
+
+      function applyTheme(theme) {
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem(LS_THEME, theme);
+        const btn = $("#btn-theme");
+        if (btn) btn.innerHTML = theme === "dark" ? ICON_SUN : ICON_MOON;
+      }
+      function initTheme() {
+        const saved = localStorage.getItem(LS_THEME);
+        const dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        applyTheme(saved || (dark ? "dark" : "light"));
+      }
+      function toggleTheme() {
+        const cur = document.documentElement.getAttribute("data-theme");
+        applyTheme(cur === "dark" ? "light" : "dark");
+      }
+
+      /* ============================================================
+       * Toast
+       * ========================================================== */
+      function toast(msg, kind) {
+        const el = document.createElement("div");
+        el.className = "toast " + (kind || "");
+        el.textContent = msg;
+        $("#toasts").appendChild(el);
+        requestAnimationFrame(function () {
+          el.classList.add("in");
+        });
+        setTimeout(function () {
+          el.classList.remove("in");
+          setTimeout(function () {
+            el.remove();
+          }, 320);
+        }, 3200);
+      }
+
+      /* ============================================================
+       * 启动 / 门
+       * ========================================================== */
+      function setGateHint(text, isErr) {
+        const h = $("#gate-hint");
+        h.textContent = text;
+        h.className = "gate-hint" + (isErr ? " err" : "");
+      }
+
+      async function probeGateLive() {
+        const box = $("#gate-live");
+        try {
+          const res = await fetch("/api/health");
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const b = await res.json();
+          box.innerHTML =
+            '<span class="dot" style="background: var(--ok)"></span>' +
+            "<span>服务在线 · v" +
+            esc(b.version || "?") +
+            " · " +
+            (b.cardCount != null ? b.cardCount + " 张卡" : "") +
+            "</span>";
+        } catch (e) {
+          box.innerHTML =
+            '<span class="dot" style="background: var(--danger)"></span>' +
+            "<span>探测不到服务（可能网络不通）</span>";
+        }
+      }
+
+      function showGate() {
+        authed = false;
+        stopPolling();
+        $("#app").hidden = true;
+        $("#gate").hidden = false;
+        $("#gate-token").value = token || "";
+        $("#gate-token").focus();
+        probeGateLive();
+      }
+
+      function enterApp(overview) {
+        authed = true;
+        $("#gate").hidden = true;
+        $("#app").hidden = false;
+        S.overview = overview;
+        S.clockOffset = (overview.serverTime || Date.now()) - Date.now();
+        buildStats();
+        renderOverview();
+        startPolling();
+        refreshCards(true);
+        if (pendingCard) {
+          const pid = pendingCard;
+          pendingCard = null;
+          openCard(pid);
+        }
+      }
+
+      async function tryEnter(withToken) {
+        token = withToken || "";
+        try {
+          const ov = await api("/api/admin/overview");
+          localStorage.setItem(LS_TOKEN, token);
+          enterApp(ov);
+          return true;
+        } catch (e) {
+          if (e.code === 401) {
+            localStorage.removeItem(LS_TOKEN);
+            token = "";
+            setGateHint("令牌不正确 —— 服务器返回 401，再试一次？", true);
+            return false;
+          }
+          setGateHint("连不上服务器：" + (e.message || e), true);
+          return false;
+        }
+      }
+
+      function logout(silent) {
+        localStorage.removeItem(LS_TOKEN);
+        token = "";
+        S.events = [];
+        S.lastEventId = 0;
+        if (!silent) toast("已退出，令牌已从本机清除");
+        showGate();
+      }
+
+      /* ============================================================
+       * 轮询
+       * ========================================================== */
+      function stopPolling() {
+        S.timers.forEach(clearInterval);
+        S.timers = [];
+      }
+      function startPolling() {
+        stopPolling();
+        // 概览 4 秒一次就够：里面只有内存/体积/设备这类慢变量；
+        // 秒针靠本地时钟走，不占请求。
+        S.timers.push(setInterval(refreshOverview, 4000));
+        S.timers.push(setInterval(function () {
+          if (!document.hidden) refreshEvents(false);
+        }, 2500));
+        S.timers.push(setInterval(refreshClock, 1000));
+        S.timers.push(setInterval(function () {
+          // 抽屉打开时别刷新列表：会打断滚动位置，用户还看不见
+          if (!document.hidden && $("#drawer").hidden) refreshCards(true);
+        }, 12000));
+        refreshEvents(true);
+        refreshClock();
+      }
+
+      async function refreshOverview() {
+        if (document.hidden) return;
+        try {
+          const ov = await api("/api/admin/overview");
+          S.overview = ov;
+          S.clockOffset = (ov.serverTime || Date.now()) - Date.now();
+          renderOverview();
+          setLive(true);
+        } catch (e) {
+          if (e.code === 401) return logout(true);
+          setLive(false);
+        }
+      }
+
+      async function refreshEvents(first) {
+        try {
+          const since = first ? 0 : S.lastEventId;
+          const data = await api("/api/admin/events?since=" + since + "&limit=120");
+          const incoming = data.events || [];
+          if (first) S.events = incoming.slice();
+          else S.events = S.events.concat(incoming);
+          if (S.events.length > 160) S.events = S.events.slice(S.events.length - 160);
+          if (data.latestId && data.latestId > S.lastEventId) S.lastEventId = data.latestId;
+          renderFeed();
+        } catch (e) {
+          if (e.code === 401) logout(true);
+        }
+      }
+
+      function refreshClock() {
+        const now = Date.now() + S.clockOffset;
+        const d = new Date(now);
+        const c = $("#clock");
+        const cd = $("#clock-date");
+        if (c) c.textContent = pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + ":" + pad2(d.getSeconds());
+        if (cd) {
+          const wd = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"][d.getDay()];
+          cd.textContent = d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) + " " + wd;
+        }
+      }
+
+      function setLive(up) {
+        S.alive = up;
+        renderStatus();
+      }
+
+      /**
+       * 状态文案要考虑"活着但一直失败"这种情况。
+       * 只按「刚才那次请求成没成」上色的话，令牌过期一整排 401 也显示运行正常。
+       */
+      function renderStatus() {
+        const pill = $("#live-pill");
+        const hero = $("#hero");
+        if (!pill || !hero) return;
+        const up = S.alive;
+        const lm = (S.overview && S.overview.activity && S.overview.activity.lastMinute) || null;
+        const failed = lm ? lm.failed || 0 : 0;
+        const degraded = up && failed > 0;
+
+        pill.classList.toggle("down", !up);
+        pill.classList.toggle("warn", degraded);
+        const lp = pill.querySelector(".lp-text");
+        if (lp) lp.textContent = up ? (degraded ? "有失败" : "LIVE") : "断开";
+        hero.classList.toggle("down", !up);
+        hero.classList.toggle("warn", degraded);
+
+        $("#hero-title").textContent = !up
+          ? "连接中断"
+          : degraded
+            ? "有 " + failed + " 次失败请求"
+            : "运行正常";
+
+        const sub = $("#hero-sub");
+        if (sub && S.overview) {
+          let extra = "";
+          if (up && lm) {
+            extra = " · 近一分钟 推 " + lm.push + " / 拉 " + lm.pull;
+            if (failed) extra += " / 失败 " + failed;
+          }
+          sub.textContent = "挂卡时间轴同步服务 · v" + (S.overview.version || "?") + extra;
+        }
+      }
+
+      /* ============================================================
+       * 渲染 · 概览
+       * ========================================================== */
+      function buildStats() {
+        const wrap = $("#stats");
+        wrap.innerHTML = STAT_DEFS.map(function (d) {
+          return (
+            '<div class="stat" style="--tone:' +
+            d.tone +
+            '">' +
+            '<div class="stat-label"><i></i>' +
+            esc(d.label) +
+            "</div>" +
+            '<div class="stat-num' +
+            (d.mono ? " mono" : "") +
+            '" id="stat-' +
+            d.key +
+            '">0</div>' +
+            '<div class="stat-sub">' +
+            esc(d.sub) +
+            "</div>" +
+            "</div>"
+          );
+        }).join("");
+      }
+
+      const lastNums = {};
+      function countUp(key, to) {
+        const el = $("#stat-" + key);
+        if (!el) return;
+        const from = lastNums[key];
+        lastNums[key] = to;
+        // 首屏（还没有旧值）或数值没变：直接落最终值，别做动画 ——
+        // 否则截图/首帧会停在半路，看起来像数据错了。
+        if (from === undefined || from === to) {
+          el.textContent = to;
+          return;
+        }
+        const start = performance.now();
+        const dur = 520;
+        function step(t) {
+          const p = Math.min(1, (t - start) / dur);
+          const eased = 1 - Math.pow(1 - p, 3);
+          const v = Math.round(from + (to - from) * eased);
+          el.textContent = v;
+          if (p < 1) requestAnimationFrame(step);
+          else el.textContent = to;
+        }
+        requestAnimationFrame(step);
+      }
+
+      /* 芯片定义：只建一次，之后只改数字 —— 整块重建会把火花图反复清零，
+         每 3 秒闪一次，看起来像图表在抖。 */
+      const CHIP_DEFS = [
+        { id: "uptime", k: "已运行" },
+        { id: "runtime", k: "运行环境" },
+        { id: "mem", k: "内存" },
+        { id: "db", k: "数据库" },
+        { id: "act", k: "近一分钟" },
+        { id: "buffered", k: "事件缓冲" }
+      ];
+
+      function ensureChips() {
+        const chips = $("#hero-chips");
+        if (!chips || chips.dataset.ready === "1") return;
+        chips.innerHTML =
+          CHIP_DEFS.map(function (d) {
+            return (
+              '<span class="chip"><span class="k">' +
+              esc(d.k) +
+              '</span><b id="chip-' +
+              d.id +
+              '">—</b></span>'
+            );
+          }).join("");
+        chips.dataset.ready = "1";
+      }
+
+      function setChip(id, value) {
+        const el = document.getElementById("chip-" + id);
+        if (!el) return;
+        const v = String(value);
+        // 只在真的变了才写 DOM，省掉无谓的重排
+        if (el.textContent !== v) el.textContent = v;
+      }
+
+      function renderOverview() {
+        const ov = S.overview;
+        if (!ov) return;
+        const st = ov.stats || {};
+        STAT_DEFS.forEach(function (d) {
+          countUp(d.key, Number(st[d.key] || 0));
+        });
+
+        const rt = ov.runtime || {};
+        const lm = (ov.activity && ov.activity.lastMinute) || null;
+        ensureChips();
+        setChip("uptime", fmtDur(ov.uptimeMs));
+        setChip("runtime", rt.kind === "node" ? "Node " + (rt.nodeVersion || "") : "Cloudflare Worker");
+        setChip("mem", rt.memoryBytes != null ? fmtBytes(rt.memoryBytes) : "—");
+        setChip("db", rt.dbSizeBytes != null ? fmtBytes(rt.dbSizeBytes) : "—");
+        setChip("act", lm ? "推 " + lm.push + " · 拉 " + lm.pull : "—");
+        setChip("buffered", (ov.activity && ov.activity.buffered) || 0);
+
+        renderStatus();
+
+        S.devices = ov.devices || [];
+        renderDevices();
+      }
+
+      /* ============================================================
+       * 渲染 · 设备
+       * ========================================================== */
+      function renderDevices() {
+        const wrap = $("#devices");
+        const list = S.devices || [];
+        $("#dev-count").textContent = list.length ? list.length + " 台" : "";
+        if (!list.length) {
+          wrap.innerHTML = '<div class="empty" style="padding:18px 0">还没有设备同步过</div>';
+          return;
+        }
+        const now = Date.now();
+        wrap.innerHTML = list
+          .map(function (d) {
+            const online = now - d.lastSeen < 120000;
+            const isPanel = String(d.deviceId).indexOf("panel@") === 0;
+            const plat = guessPlatform(d.lastUa, d.deviceId);
+            const active = S.feed.device === d.deviceId ? " active" : "";
+            const meta = isPanel
+              ? "操作 " + (d.adminOps || 0) +
+                (d.failures ? " · 失败 " + d.failures : "") +
+                " · " + relTime(d.lastSeen)
+              : "推 " + d.pushes + " · 拉 " + d.pulls + " · 写 " + d.cardsWritten + " · " + relTime(d.lastSeen);
+            const failTag =
+              !isPanel && d.failures ? ' · <span class="dev-fail">失败 ' + d.failures + "</span>" : "";
+            return (
+              '<button class="dev' +
+              active +
+              '" data-dev="' +
+              esc(d.deviceId) +
+              '" title="' +
+              esc(d.deviceId) +
+              '（点击只看这台）">' +
+              '<span class="dev-dot ' +
+              (online ? "on" : "") +
+              '"></span>' +
+              '<div class="dev-main">' +
+              '<div class="dev-name">' +
+              esc(shortId(d.deviceId)) +
+              "</div>" +
+              '<div class="dev-meta">' +
+              esc(meta) +
+              failTag +
+              "</div>" +
+              "</div>" +
+              (plat ? '<span class="dev-plat' + (isPanel ? " panel" : "") + '">' + esc(plat) + "</span>" : "") +
+              "</button>"
+            );
+          })
+          .join("");
+      }
+
+      /* ============================================================
+       * 渲染 · 动态
+       * ========================================================== */
+      function evtIcon(kind) {
+        if (kind === "push") return "↑";
+        if (kind === "pull") return "↓";
+        return "⚙";
+      }
+
+      function filteredEvents() {
+        return S.events.filter(function (e) {
+          if (S.feed.kind !== "all" && e.kind !== S.feed.kind) return false;
+          if (S.feed.device && e.deviceId !== S.feed.device) return false;
+          return true;
+        });
+      }
+
+      function renderFeedTools() {
+        const wrap = $("#feed-tools");
+        if (!wrap) return;
+        const counts = { all: S.events.length, push: 0, pull: 0, admin: 0 };
+        S.events.forEach(function (e) {
+          counts[e.kind] = (counts[e.kind] || 0) + 1;
+        });
+        const defs = [
+          { k: "all", label: "全部" },
+          { k: "push", label: "推送" },
+          { k: "pull", label: "拉取" },
+          { k: "admin", label: "面板" }
+        ];
+        let html = defs
+          .map(function (d) {
+            const active = S.feed.kind === d.k ? " active" : "";
+            return (
+              '<button class="fchip' +
+              active +
+              '" data-kind="' +
+              d.k +
+              '" aria-pressed="' +
+              (S.feed.kind === d.k) +
+              '">' +
+              esc(d.label) +
+              " <b>" +
+              (counts[d.k] || 0) +
+              "</b></button>"
+            );
+          })
+          .join("");
+        if (S.feed.device) {
+          html +=
+            '<span class="feed-dev"><b title="' +
+            esc(S.feed.device) +
+            '">' +
+            esc(shortId(S.feed.device)) +
+            '</b><button data-clear-dev="1" title="清除设备筛选" aria-label="清除设备筛选">✕</button></span>';
+        }
+        wrap.innerHTML = html;
+      }
+
+      function renderFeed() {
+        const wrap = $("#feed");
+        const filtered = filteredEvents();
+        const list = filtered.slice().reverse();
+        renderFeedTools();
+        $("#feed-count").textContent =
+          filtered.length === S.events.length
+            ? S.events.length
+              ? "最近 " + S.events.length + " 条"
+              : ""
+            : filtered.length + " / " + S.events.length + " 条";
+        if (!list.length) {
+          wrap.innerHTML =
+            '<div class="empty" style="padding:20px 0">' +
+            (S.events.length ? "这个筛选下没有记录" : "还没有同步活动") +
+            "</div>";
+          return;
+        }
+        wrap.innerHTML = list
+          .map(function (e) {
+            const failed = e.ok === false;
+            const kindName = { push: "推送", pull: "拉取", admin: "面板操作" }[e.kind] || "请求";
+            let lineHtml = "";
+            let sub = "";
+            if (failed) {
+              lineHtml = '<span class="evt-fail-txt">' + esc(kindName) + "失败</span>";
+              sub = describeServerError(e.error) + (e.ms ? " · " + e.ms + "ms" : "");
+            } else if (e.kind === "push") {
+              let line = "推送 " + (e.accepted || 0) + " 张";
+              if (e.rejected) line += " · 拒绝 " + e.rejected;
+              if (e.unchanged) line += " · 跳过 " + e.unchanged;
+              lineHtml = esc(line);
+              sub = "游标 → " + e.cursor + " · " + e.ms + "ms";
+            } else if (e.kind === "pull") {
+              lineHtml = esc("拉取 " + (e.pulled || 0) + " 条");
+              sub = "游标 " + e.cursor + " · " + e.ms + "ms";
+            } else {
+              const actMap = { delete: "软删除", restore: "恢复", optimize: "整理数据库" };
+              let line = actMap[e.action] || e.action || "操作";
+              if (e.cardId) line += " · " + shortId(e.cardId);
+              lineHtml = esc(line);
+              sub = "面板操作" + (e.ms ? " · " + e.ms + "ms" : "");
+            }
+            return (
+              '<div class="evt' +
+              (failed ? " failed" : "") +
+              '">' +
+              '<span class="evt-ico ' +
+              (failed ? "fail" : esc(e.kind)) +
+              '">' +
+              (failed ? "!" : evtIcon(e.kind)) +
+              "</span>" +
+              '<div class="evt-main">' +
+              '<div class="evt-line"><span class="evt-dev" title="' +
+              esc(e.deviceId) +
+              '">' +
+              esc(shortId(e.deviceId)) +
+              "</span><span>" +
+              lineHtml +
+              "</span></div>" +
+              '<div class="evt-sub">' +
+              esc(sub) +
+              "</div>" +
+              "</div>" +
+              '<span class="evt-time">' +
+              esc(relTime(e.at)) +
+              "</span>" +
+              "</div>"
+            );
+          })
+          .join("");
+      }
+
+      /* ============================================================
+       * 渲染 · 卡片
+       * ========================================================== */
+      function buildFilters() {
+        const st = (S.overview && S.overview.stats) || {};
+        const defs = [
+          { key: "all", label: "全部", n: st.total || 0 },
+          { key: "open", label: "进行中", n: st.open || 0 },
+          { key: "done", label: "已完成", n: st.done || 0 },
+          { key: "archived", label: "已归档", n: st.archived || 0 },
+          { key: "deleted", label: "已删除", n: st.deleted || 0 }
+        ];
+        $("#filters").innerHTML = defs
+          .map(function (d) {
+            const active = S.filter.status === d.key ? " active" : "";
+            return (
+              '<button class="fchip' +
+              active +
+              '" data-status="' +
+              d.key +
+              '">' +
+              esc(d.label) +
+              " <b>" +
+              d.n +
+              "</b></button>"
+            );
+          })
+          .join("");
+        $$("#filters .fchip").forEach(function (b) {
+          b.addEventListener("click", function () {
+            S.filter.status = b.getAttribute("data-status");
+            S.offset = 0;
+            buildFilters();
+            refreshCards(true);
+          });
+        });
+      }
+
+      async function refreshCards(reset) {
+        if (reset) S.offset = 0;
+        try {
+          const q = encodeURIComponent(S.filter.q);
+          const data = await api(
+            "/api/admin/cards?status=" +
+              S.filter.status +
+              "&q=" +
+              q +
+              "&limit=" +
+              S.limit +
+              "&offset=" +
+              S.offset
+          );
+          S.cards = data.rows || [];
+          S.total = data.total || 0;
+          renderCards();
+          if (S.overview) buildFilters();
+        } catch (e) {
+          if (e.code === 401) logout(true);
+        }
+      }
+
+      function progressOf(card) {
+        const items = card.items || [];
+        const done = items.filter(function (i) {
+          return i.done;
+        }).length;
+        return { done: done, total: items.length, ratio: items.length ? done / items.length : 0 };
+      }
+
+      function statusBadge(card) {
+        if (card.deletedAt) return '<span class="badge deleted">已删除</span>';
+        const s = card.status || "open";
+        return '<span class="badge ' + s + '">' + (STATUS_LABEL[s] || s) + "</span>";
+      }
+
+      function renderCards() {
+        const wrap = $("#card-list");
+        $("#cards-count").textContent = S.total + " 张";
+        if (!S.cards.length) {
+          wrap.innerHTML =
+            '<div class="empty"><span class="fish">' +
+            FISH_SVG +
+            "</span><div>这个筛选下没有卡片</div></div>";
+          updatePager();
+          return;
+        }
+        wrap.innerHTML = S.cards
+          .map(function (row) {
+            const c = row.card || {};
+            const p = progressOf(c);
+            const del = !!c.deletedAt;
+            const title = c.title && c.title.trim() ? c.title : "（无标题）";
+            const tag = c.tag ? '<span class="tag">' + esc(c.tag) + "</span>" : "";
+            const prog = p.total
+              ? '<div class="prog"><div class="prog-track"><div class="prog-fill" style="width:' +
+                Math.round(p.ratio * 100) +
+                '%"></div></div><span>' +
+                p.done +
+                "/" +
+                p.total +
+                "</span></div>"
+              : '<div class="prog"><span>空卡</span></div>';
+            return (
+              '<button class="crow" data-id="' +
+              esc(c.id) +
+              '">' +
+              '<span class="crow-bar" style="background:' +
+              safeColor(c.color) +
+              '"></span>' +
+              '<div class="crow-main">' +
+              '<div class="crow-title"><span class="tt">' +
+              esc(title) +
+              "</span>" +
+              tag +
+              "</div>" +
+              '<div class="crow-meta">' +
+              "<span>" +
+              esc(fmtDateTime(c.anchorAt)) +
+              "</span>" +
+              '<span class="sep"></span>' +
+              "<span>更新 " +
+              esc(relTime(c.updatedAt)) +
+              "</span>" +
+              (row.lastDeviceId
+                ? '<span class="sep"></span><span title="' + esc(row.lastDeviceId) + '">' + esc(shortId(row.lastDeviceId)) + "</span>"
+                : "") +
+              "</div>" +
+              "</div>" +
+              '<div class="crow-right">' +
+              prog +
+              statusBadge(c) +
+              "</div>" +
+              "</button>"
+            );
+          })
+          .join("");
+        $$("#card-list .crow").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            openCard(btn.getAttribute("data-id"));
+          });
+        });
+        updatePager();
+      }
+
+      function updatePager() {
+        const start = S.total === 0 ? 0 : S.offset + 1;
+        const end = Math.min(S.offset + S.limit, S.total);
+        $("#pager-info").textContent =
+          S.total === 0 ? "共 0 张" : "共 " + S.total + " 张 · 显示 " + start + "–" + end;
+        $("#prev").disabled = S.offset <= 0;
+        $("#next").disabled = S.offset + S.limit >= S.total;
+      }
+
+      /* ============================================================
+       * 抽屉 · 卡片详情
+       * ========================================================== */
+      async function openCard(id) {
+        let data;
+        try {
+          data = await api("/api/admin/cards/" + encodeURIComponent(id));
+        } catch (e) {
+          if (e.code === 401) return logout(true);
+          toast("读不到这张卡：" + e.message, "err");
+          return;
+        }
+        S.selected = data;
+        // 记住打开前的焦点，关抽屉时还回去 —— 否则键盘用户会被扔回页面顶部
+        S.lastFocus = document.activeElement;
+        renderDrawer(data);
+        const dr = $("#drawer");
+        dr.hidden = false;
+        requestAnimationFrame(function () {
+          dr.classList.add("open");
+        });
+        setTimeout(function () {
+          const close = $("#dt-close");
+          if (close) close.focus();
+        }, 80);
+      }
+
+      function closeDrawer() {
+        const dr = $("#drawer");
+        dr.classList.remove("open");
+        setTimeout(function () {
+          dr.hidden = true;
+        }, 260);
+        S.selected = null;
+        const back = S.lastFocus;
+        S.lastFocus = null;
+        if (back && typeof back.focus === "function") {
+          try {
+            back.focus();
+          } catch (e) {}
+        }
+      }
+
+      /** 抽屉里的 Tab 循环，别让焦点跑到背后的页面上 */
+      function trapTab(e) {
+        const panel = $("#dt-panel");
+        if (!panel) return;
+        const nodes = panel.querySelectorAll(
+          'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (!nodes.length) return;
+        const first = nodes[0];
+        const last = nodes[nodes.length - 1];
+        const active = document.activeElement;
+        if (e.shiftKey && (active === first || !panel.contains(active))) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && active === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+
+      function renderDrawer(data) {
+        const c = data.card || {};
+        const del = !!c.deletedAt;
+        const p = progressOf(c);
+        $("#dt-title").textContent = c.title && c.title.trim() ? c.title : "（无标题）";
+
+        const chips = [];
+        chips.push(statusBadge(c));
+        if (c.tag) chips.push('<span class="tag">' + esc(c.tag) + "</span>");
+        chips.push('<span class="tag mono">' + esc(shortId(data.lastDeviceId)) + "</span>");
+        $("#dt-sub").innerHTML = chips.join("");
+
+        const items = c.items || [];
+        const itemsHtml = items.length
+          ? '<div class="items">' +
+            items
+              .map(function (it) {
+                return (
+                  '<div class="item-row ' +
+                  (it.done ? "done" : "") +
+                  '">' +
+                  '<span class="item-box ' +
+                  (it.done ? "on" : "") +
+                  '">' +
+                  (it.done ? ICON_CHECK : "") +
+                  "</span>" +
+                  '<span class="item-text">' +
+                  esc(it.text || "（空）") +
+                  "</span>" +
+                  "</div>"
+                );
+              })
+              .join("") +
+            "</div>"
+          : '<div class="empty" style="padding:12px 0;text-align:left">这张卡没有条目</div>';
+
+        const kv = [
+          ["卡片 ID", '<span class="mono">' + esc(c.id) + "</span>"],
+          ["状态", esc(STATUS_LABEL[c.status] || c.status || "—") + (del ? "（已软删除）" : "")],
+          ["挂载时间", esc(fmtDateTime(c.anchorAt))],
+          ["创建时间", esc(fmtDateTime(c.createdAt))],
+          ["最后更新", esc(fmtDateTime(c.updatedAt)) + " · " + esc(relTime(c.updatedAt))],
+          ["软删除", del ? esc(fmtDateTime(c.deletedAt)) : "否"],
+          ["修订号 rev", esc(c.rev)],
+          ["服务端游标", '<span class="mono">seq ' + esc(data.seq) + "</span>"],
+          ["完成度", p.total ? p.done + " / " + p.total : "无条目"]
+        ];
+
+        $("#dt-body").innerHTML =
+          '<div class="dsec"><h3>条目（' +
+          items.length +
+          "）</h3>" +
+          itemsHtml +
+          "</div>" +
+          '<div class="dsec"><h3>信息</h3><dl class="kv">' +
+          kv
+            .map(function (row) {
+              return "<dt>" + esc(row[0]) + "</dt><dd>" + row[1] + "</dd>";
+            })
+            .join("") +
+          "</dl></div>" +
+          '<div class="dsec"><h3>操作</h3><div class="dact">' +
+          (del
+            ? '<button class="btn primary sm" id="act-restore">恢复这张卡</button>'
+            : '<button class="btn danger sm" id="act-delete">软删除</button>') +
+          '<button class="btn sm" id="act-copy-id">复制 ID</button>' +
+          '<button class="btn sm" id="act-copy-json">复制 JSON</button>' +
+          "</div></div>" +
+          '<div class="dsec"><h3>原始 JSON</h3><div class="json-box">' +
+          esc(JSON.stringify(c, null, 2)) +
+          "</div></div>";
+
+        const delBtn = $("#act-delete");
+        if (delBtn)
+          delBtn.addEventListener("click", function () {
+            doCardAction("delete", c.id);
+          });
+        const resBtn = $("#act-restore");
+        if (resBtn)
+          resBtn.addEventListener("click", function () {
+            doCardAction("restore", c.id);
+          });
+        $("#act-copy-id").addEventListener("click", function () {
+          copyText(c.id, "卡片 ID 已复制");
+        });
+        $("#act-copy-json").addEventListener("click", function () {
+          copyText(JSON.stringify(c, null, 2), "JSON 已复制");
+        });
+      }
+
+      async function doCardAction(action, id) {
+        const btn = action === "delete" ? $("#act-delete") : $("#act-restore");
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = "处理中…";
+        }
+        try {
+          const res = await post("/api/admin/cards/" + encodeURIComponent(id) + "/" + action);
+          if (res && res.ok === false) {
+            toast("操作被服务器拒绝（可能有更新的版本）", "err");
+          } else {
+            toast(action === "delete" ? "已软删除，各设备会在下次同步时同步" : "已恢复", "ok");
+          }
+          await refreshCards(true);
+          await refreshOverview();
+          await refreshEvents(false);
+          if (S.selected && S.selected.card.id === id) {
+            try {
+              const fresh = await api("/api/admin/cards/" + encodeURIComponent(id));
+              S.selected = fresh;
+              renderDrawer(fresh);
+            } catch (e) {}
+          }
+        } catch (e) {
+          if (e.code === 401) return logout(true);
+          toast("操作失败：" + e.message, "err");
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = action === "delete" ? "软删除" : "恢复这张卡";
+          }
+        }
+      }
+
+      function copyText(text, okMsg) {
+        const done = function () {
+          toast(okMsg || "已复制", "ok");
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done, function () {
+            fallbackCopy(text);
+            done();
+          });
+        } else {
+          fallbackCopy(text);
+          done();
+        }
+      }
+      function fallbackCopy(text) {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand("copy");
+        } catch (e) {}
+        ta.remove();
+      }
+
+      /* ============================================================
+       * 事件绑定
+       * ========================================================== */
+      function bind() {
+        $("#gate-fish").innerHTML = FISH_SVG;
+        $("#top-fish").innerHTML = FISH_SVG;
+        $("#foot-fish").innerHTML = FISH_SVG;
+        $("#btn-theme").innerHTML = ICON_MOON;
+        $("#btn-logout").innerHTML = ICON_OUT;
+        $("#hero-orb").innerHTML = ICON_HEART;
+
+        $("#btn-theme").addEventListener("click", toggleTheme);
+        $("#btn-logout").addEventListener("click", function () {
+          logout(false);
+        });
+
+        $("#gate-eye").addEventListener("click", function () {
+          const inp = $("#gate-token");
+          const show = inp.type === "password";
+          inp.type = show ? "text" : "password";
+          this.textContent = show ? "隐藏" : "显示";
+        });
+        $("#gate-form").addEventListener("submit", function (ev) {
+          ev.preventDefault();
+          const val = $("#gate-token").value.trim();
+          const btn = $("#gate-submit");
+          btn.disabled = true;
+          btn.textContent = "验证中…";
+          setGateHint("正在验证令牌…", false);
+          tryEnter(val).then(function () {
+            btn.disabled = false;
+            btn.textContent = "进入控制台";
+          });
+        });
+
+        let searchTimer = null;
+        const searchInput = $("#search");
+        const searchClear = $("#search-clear");
+
+        function syncSearchClear() {
+          if (searchClear) searchClear.hidden = !searchInput.value;
+        }
+
+        searchInput.addEventListener("input", function () {
+          const v = this.value;
+          syncSearchClear();
+          if (searchTimer) clearTimeout(searchTimer);
+          // 260ms 防抖：输入「装修」只打一次接口，不是四次
+          searchTimer = setTimeout(function () {
+            S.filter.q = v.trim();
+            S.offset = 0;
+            refreshCards(true);
+          }, 260);
+        });
+
+        if (searchClear) {
+          searchClear.addEventListener("click", function () {
+            searchInput.value = "";
+            syncSearchClear();
+            S.filter.q = "";
+            S.offset = 0;
+            refreshCards(true);
+            searchInput.focus();
+          });
+        }
+
+        // 动态筛选 / 设备点选（事件委托，避免每次重渲染重复绑定）
+        const feedTools = $("#feed-tools");
+        if (feedTools) {
+          feedTools.addEventListener("click", function (ev) {
+            const t = ev.target;
+            if (!t || !t.closest) return;
+            const kindBtn = t.closest("[data-kind]");
+            if (kindBtn) {
+              S.feed.kind = kindBtn.getAttribute("data-kind") || "all";
+              renderFeed();
+              return;
+            }
+            if (t.closest("[data-clear-dev]")) {
+              S.feed.device = null;
+              renderFeed();
+              renderDevices();
+            }
+          });
+        }
+        const devWrap = $("#devices");
+        if (devWrap) {
+          devWrap.addEventListener("click", function (ev) {
+            const t = ev.target;
+            if (!t || !t.closest) return;
+            const btn = t.closest("[data-dev]");
+            if (!btn) return;
+            const id = btn.getAttribute("data-dev");
+            S.feed.device = S.feed.device === id ? null : id;
+            renderFeed();
+            renderDevices();
+          });
+        }
+
+        $("#btn-refresh").addEventListener("click", function () {
+          refreshCards(true);
+          refreshOverview();
+          refreshEvents(false);
+        });
+        $("#prev").addEventListener("click", function () {
+          if (S.offset > 0) {
+            S.offset = Math.max(0, S.offset - S.limit);
+            refreshCards(false);
+          }
+        });
+        $("#next").addEventListener("click", function () {
+          if (S.offset + S.limit < S.total) {
+            S.offset += S.limit;
+            refreshCards(false);
+          }
+        });
+
+        $("#dt-close").addEventListener("click", closeDrawer);
+        $$('#drawer [data-close]').forEach(function (el) {
+          el.addEventListener("click", closeDrawer);
+        });
+        document.addEventListener("keydown", function (e) {
+          const drawerOpen = !$("#drawer").hidden;
+          if (e.key === "Escape" && drawerOpen) {
+            closeDrawer();
+            return;
+          }
+          if (drawerOpen && e.key === "Tab") {
+            trapTab(e);
+            return;
+          }
+          // "/" 快速聚焦搜索（要避开正在输入的框）
+          const tag = (e.target && e.target.tagName) || "";
+          const typing = tag === "INPUT" || tag === "TEXTAREA" || e.target.isContentEditable;
+          if (e.key === "/" && !typing && !drawerOpen) {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+          }
+        });
+
+        $("#export-link").addEventListener("click", function (e) {
+          e.preventDefault();
+          // 导出是 GET 且需要 Bearer，普通 <a> 带不上头 —— 用 fetch 拿 blob 再存。
+          fetch("/api/admin/export", { headers: token ? { Authorization: "Bearer " + token } : {} })
+            .then(function (r) {
+              if (!r.ok) throw new Error("HTTP " + r.status);
+              return r.blob();
+            })
+            .then(function (blob) {
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "timecard-export-" + Date.now() + ".json";
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              setTimeout(function () {
+                URL.revokeObjectURL(url);
+              }, 1000);
+              toast("已导出全部卡片", "ok");
+            })
+            .catch(function (e) {
+              toast("导出失败：" + e.message, "err");
+            });
+        });
+
+        document.addEventListener("visibilitychange", function () {
+          if (!document.hidden && authed) {
+            refreshOverview();
+            refreshEvents(false);
+          }
+        });
+      }
+
+      /* ============================================================
+       * 启动
+       * ========================================================== */
+      initTheme();
+      bind();
+      (async function boot() {
+        // 片段参数（都只在 # 里，不发服务器）：
+        //   #token=xxx  一次性登录（读完立刻从地址栏抹掉）
+        //   #theme=dark|light  强制主题（截图 / 演示）
+        //   #card=<id>  登录后直接打开某张卡的详情抽屉
+        const hash = location.hash || "";
+        const themeM = /(?:^#|&)theme=(dark|light)/.exec(hash);
+        if (themeM) applyTheme(themeM[1]);
+        const tokenM = /(?:^#|&)token=([^&]+)/.exec(hash);
+        const cardM = /(?:^#|&)card=([^&]+)/.exec(hash);
+        if (tokenM || cardM) {
+          if (cardM) pendingCard = decodeURIComponent(cardM[1]);
+          try {
+            history.replaceState(null, "", location.pathname + location.search);
+          } catch (e) {}
+          if (tokenM) {
+            token = decodeURIComponent(tokenM[1]);
+            const ok = await tryEnter(token);
+            if (!ok) showGate();
+            return;
+          }
+        }
+        if (token) {
+          const ok = await tryEnter(token);
+          if (!ok) showGate();
+        } else {
+          // 可能是「开发模式没设令牌」，先不带令牌试一次
+          try {
+            const ov = await api("/api/admin/overview");
+            enterApp(ov);
+          } catch (e) {
+            showGate();
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>
