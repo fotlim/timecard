@@ -191,6 +191,16 @@ async function main() {
     const searchMiss = await adminGet('/api/admin/cards?q=' + encodeURIComponent('不存在的词'))
     check('搜索无命中返回 0', searchMiss.body.rows.length === 0)
 
+    const byItem = await adminGet('/api/admin/cards?q=' + encodeURIComponent('找师傅'))
+    check(
+      '条目内容也能搜到',
+      byItem.body.rows.length === 1 && byItem.body.rows[0].card.id === 'a2',
+      `n=${byItem.body.rows.length}`
+    )
+
+    const byTag = await adminGet('/api/admin/cards?q=' + encodeURIComponent('工作'))
+    check('分类也能搜到', byTag.body.rows.some((r) => r.card.id === 'a2'), `n=${byTag.body.rows.length}`)
+
     const paged = await adminGet('/api/admin/cards?status=all&limit=2&offset=0')
     check('分页 limit 生效', paged.body.rows.length === 2 && paged.body.total === 3, `rows=${paged.body.rows.length}`)
 

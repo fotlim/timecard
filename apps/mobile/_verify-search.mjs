@@ -59,14 +59,14 @@ function connect(url) {
 async function main() {
   const now = Date.now()
   const DAY = 86400000
-  const card = (id, title, tag, anchorAt) => ({
-    id, title, items: [], tag, color: '#71805a', anchorAt, order: 0,
+  const card = (id, title, tag, anchorAt, items = []) => ({
+    id, title, items, tag, color: '#71805a', anchorAt, order: 0,
     status: 'open', createdAt: now, updatedAt: now, deletedAt: null, rev: 1
   })
   const seed = {
     skin: 'organic',
     cards: [
-      card('s1', '买菜清单', '生活', now),
+      card('s1', '买菜清单', '生活', now, [{ id: 'i1', text: '关键条目词', done: false }]),
       card('s2', '装修这个事', '工作', now - DAY),
       card('s3', '独一无二的演讲稿', '工作', now + DAY)
     ],
@@ -139,6 +139,16 @@ async function main() {
   await typeQuery('买菜')
   await sleep(300)
   check('搜「买菜」命中 1 条', (await c.eval(`document.querySelectorAll('.search-row').length`)) === 1)
+
+  // 条目内容也能搜到（"独一无二"之类不出现在标题里，这里用注入的条目词）
+  await typeQuery('关键条目词')
+  await sleep(300)
+  const itemRows = await c.eval(`document.querySelectorAll('.search-row').length`)
+  check('条目内容也能搜到', itemRows === 1, `rows=${itemRows}`)
+  check(
+    '结果里标出命中的条目',
+    await c.eval(`(document.querySelector('.search-row-hit')?.textContent || '').includes('关键条目词')`)
+  )
 
   // 点结果 → 打开该卡编辑抽屉
   await c.eval(`document.querySelector('.search-row').click()`)

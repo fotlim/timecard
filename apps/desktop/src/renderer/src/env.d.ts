@@ -2,6 +2,7 @@ import type { Card, RejectedCard, Skin, SyncState } from '@timecard/shared'
 
 export interface Prefs {
   closeToTray: boolean
+  openAtLogin?: boolean
 }
 
 export interface Snapshot {

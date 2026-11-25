@@ -218,8 +218,17 @@ function cardFilterWhere(status: CardFilterStatus, q: string): { where: string; 
 
   const query = q.trim()
   if (query) {
-    clauses.push(`instr(lower(json_extract(card_json, '$.title')), lower(?)) > 0`)
-    params.push(query)
+    // 标题 / 分类 / 条目内容 三处都搜（和客户端搜索口径一致）。
+    // 条目用 json_each 展开后匹配 text —— SQLite 与 D1 都支持 JSON1 函数。
+    clauses.push(`(
+      instr(lower(json_extract(card_json, '$.title')), lower(?)) > 0
+      OR instr(lower(COALESCE(json_extract(card_json, '$.tag'), '')), lower(?)) > 0
+      OR EXISTS (
+        SELECT 1 FROM json_each(json_extract(card_json, '$.items'))
+        WHERE instr(lower(COALESCE(json_extract(value, '$.text'), '')), lower(?)) > 0
+      )
+    )`)
+    params.push(query, query, query)
   }
 
   return { where: clauses.length ? `WHERE ${clauses.join(' AND ')}` : '', params }

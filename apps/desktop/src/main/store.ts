@@ -11,10 +11,13 @@ const HOUR = 3_600_000
 export interface Prefs {
   /** 点窗口关闭按钮时：true=最小化到托盘，false=直接退出 */
   closeToTray: boolean
+  /** 开机自动启动（打包版才生效） */
+  openAtLogin?: boolean
 }
 
 export const DEFAULT_PREFS: Prefs = {
-  closeToTray: true
+  closeToTray: true,
+  openAtLogin: false
 }
 
 /** 同步配置。token 存在本地文件里 —— 个人桌面应用，够用了。 */

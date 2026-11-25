@@ -138,19 +138,22 @@ export default function App(): React.JSX.Element {
         </button>
 
         {store.sync?.settings?.enabled && (
-          <span
-            className={`tb-sync ${store.sync?.state?.phase ?? 'idle'}`}
+          <button
+            className="tb-sync-btn"
+            onClick={() => void window.timecard?.sync.now()}
             title={
               store.sync?.state?.error
-                ? `同步出错：${store.sync?.state?.error}`
+                ? `同步出错：${store.sync?.state?.error}（点击重试）`
                 : store.sync?.state.phase === 'syncing'
                   ? '正在同步…'
                   : store.sync?.state?.pending
-                    ? `${store.sync?.state?.pending} 条待推送`
-                    : '已同步'
+                    ? `${store.sync?.state?.pending} 条待推送（点击立即同步）`
+                    : '已同步 · 点击立即同步'
             }
-            aria-hidden="true"
-          />
+            aria-label="立即同步"
+          >
+            <span className={`tb-sync ${store.sync?.state?.phase ?? 'idle'}`} aria-hidden="true" />
+          </button>
         )}
 
         <button

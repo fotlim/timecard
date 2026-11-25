@@ -639,7 +639,9 @@ function SearchSheet({
         .filter(
           (c) =>
             c.title.toLowerCase().includes(query) ||
-            (c.tag || '').toLowerCase().includes(query)
+            (c.tag || '').toLowerCase().includes(query) ||
+            // 条目内容也搜：常常记得的是「卡里写了什么」
+            c.items.some((i) => i.text.toLowerCase().includes(query))
         )
         .sort((a, b) => b.anchorAt - a.anchorAt)
         .slice(0, 50)
@@ -662,7 +664,7 @@ function SearchSheet({
           ref={inputRef}
           value={q}
           maxLength={40}
-          placeholder="搜标题或分类…"
+          placeholder="搜标题、分类或条目…"
           onChange={(e) => setQ(e.target.value)}
         />
       </div>
@@ -672,19 +674,28 @@ function SearchSheet({
         ) : results.length === 0 ? (
           <p className="search-hint">没有匹配的卡片</p>
         ) : (
-          results.map((c) => (
-            <button key={c.id} className="search-row" onClick={() => onPick(c)}>
-              <span className="search-row-main">
-                <span className="search-row-title">{c.title || '（无标题）'}</span>
-                <span className="search-row-meta">
-                  {dayLabel(c.anchorAt)} · {dayKey(c.anchorAt)}
-                  {c.tag ? ' · ' + c.tag : ''}
-                  {c.status === 'archived' ? ' · 已归档' : isCardDone(c) ? ' · 已完成' : ''}
+          results.map((c) => {
+            const hitItem = c.items.find((i) => i.text.toLowerCase().includes(query))
+            return (
+              <button key={c.id} className="search-row" onClick={() => onPick(c)}>
+                <span className="search-row-main">
+                  <span className="search-row-title">{c.title || '（无标题）'}</span>
+                  <span className="search-row-meta">
+                    {dayLabel(c.anchorAt)} · {dayKey(c.anchorAt)}
+                    {c.tag ? ' · ' + c.tag : ''}
+                    {c.status === 'archived' ? ' · 已归档' : isCardDone(c) ? ' · 已完成' : ''}
+                    {hitItem && (
+                      <span className="search-row-hit">
+                        {' '}
+                        · 条目「{hitItem.text.trim().slice(0, 24)}」
+                      </span>
+                    )}
+                  </span>
                 </span>
-              </span>
-              <span className="search-row-date">{new Date(c.anchorAt).getDate()}</span>
-            </button>
-          ))
+                <span className="search-row-date">{new Date(c.anchorAt).getDate()}</span>
+              </button>
+            )
+          })
         )}
       </div>
     </SheetShell>

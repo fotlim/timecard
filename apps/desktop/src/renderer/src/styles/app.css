@@ -227,6 +227,13 @@ html[data-theme='neo'] .tsearch-box {
   font-size: 11.5px;
   color: var(--muted);
 }
+.tsearch-row-hit {
+  color: var(--accent-2);
+}
+html[data-theme='brutal'] .tsearch-row-hit {
+  background: var(--accent-soft);
+  padding: 0 3px;
+}
 .tsearch-row-day {
   flex: 0 0 auto;
   font-family: var(--font-display);
@@ -1817,6 +1824,23 @@ html[data-theme='brutal'] .check {
   min-width: 0;
 }
 /* 标题栏同步状态点 */
+/* 同步状态点：点一下立即同步（6px 的点太小，外面套一个 20px 的透明热区） */
+.tb-sync-btn {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  -webkit-app-region: no-drag;
+  transition: background 0.16s;
+}
+.tb-sync-btn:hover {
+  background: color-mix(in srgb, var(--line-2) 32%, transparent);
+}
+.tb-sync-btn:active {
+  transform: scale(0.94);
+}
 .tb-sync {
   flex: 0 0 auto;
   width: 6px;

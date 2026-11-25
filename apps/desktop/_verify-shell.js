@@ -69,6 +69,13 @@ function connect(url) {
   // 用临时数据目录：不碰真人数据，也不受"上次皮肤已是 brutal"的状态干扰
   env.TIMECARD_DATA_DIR =
     process.env.TIMECARD_DATA_DIR || fs.mkdtempSync(path.join(os.tmpdir(), 'tc-shell-'))
+  const dataJson = () => {
+    try {
+      return JSON.parse(fs.readFileSync(path.join(env.TIMECARD_DATA_DIR, 'timecard.json'), 'utf-8'))
+    } catch {
+      return {}
+    }
+  }
 
   const child = spawn(ELECTRON, [BASE, `--remote-debugging-port=${PORT}`], { env, stdio: 'ignore' })
   const results = []
@@ -135,6 +142,37 @@ function connect(url) {
       })()
     `)
     results.push(['关闭到托盘开关', closeToTray === 'true', String(closeToTray)])
+
+    // 开机自启：开关存在、默认关、点一下变开
+    const autoStartBefore = await setConn.eval(`
+      (() => {
+        const row = [...document.querySelectorAll('.srow')]
+          .find(r => r.textContent.includes('开机自动启动'));
+        if (!row) return null;
+        const t = row.querySelector('.stoggle');
+        return t ? t.getAttribute('aria-checked') : null;
+      })()
+    `)
+    results.push(['开机自启开关存在', autoStartBefore !== null, String(autoStartBefore)])
+    await setConn.eval(`
+      (() => {
+        const row = [...document.querySelectorAll('.srow')]
+          .find(r => r.textContent.includes('开机自动启动'));
+        row.querySelector('.stoggle').click();
+      })()
+    `)
+    await sleep(400)
+    const autoStartAfter = await setConn.eval(`
+      (() => {
+        const row = [...document.querySelectorAll('.srow')]
+          .find(r => r.textContent.includes('开机自动启动'));
+        return row.querySelector('.stoggle').getAttribute('aria-checked');
+      })()
+    `)
+    results.push(['开机自启可切换', autoStartBefore !== autoStartAfter, `${autoStartBefore} -> ${autoStartAfter}`])
+    results.push(
+      ['偏好已落盘', dataJson().prefs.openAtLogin === (autoStartAfter === 'true'), String(dataJson().prefs.openAtLogin)]
+    )
 
     setConn.close()
     main.close()

@@ -219,6 +219,9 @@ html[data-theme='neo'] .m-tools .m-search {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
+.search-row-hit {
+  color: var(--accent-2);
+}
 .search-row-date {
   flex: 0 0 auto;
   font-family: var(--font-display);

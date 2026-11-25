@@ -103,6 +103,19 @@ function connect(url) {
     check('搜「电费」有结果', n >= 1, `rows=${n}`)
     check('命中含「交水电费」', await c.eval(`[...document.querySelectorAll('.tsearch-row-title')].some(e => e.textContent.includes('交水电费'))`))
 
+    // 条目内容也要能搜到（"抄电表读数" 只在条目的 text 里）
+    await typeQuery('抄电表')
+    await sleep(300)
+    const nItem = await c.eval(`document.querySelectorAll('.tsearch-row').length`)
+    check('条目内容也能搜到', nItem >= 1, `rows=${nItem}`)
+    check(
+      '结果里标出命中的条目',
+      await c.eval(`(document.querySelector('.tsearch-row-hit')?.textContent || '').includes('抄电表')`)
+    )
+
+    await typeQuery('电费')
+    await sleep(300)
+
     await c.eval(`document.querySelector('.tsearch-row').click()`)
     await sleep(500)
     check('点结果打开编辑器', await c.eval(`!!document.querySelector('.editor')`))

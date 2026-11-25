@@ -629,6 +629,21 @@ function cleanItems(
   return out
 }
 
+/**
+ * 开机自启。
+ * 只有打包版才有意义（开发模式下 execPath 是 electron.exe，注册了也白搭）；
+ * Windows / macOS 用系统自带的登录项，其它平台忽略。
+ */
+function applyLoginItem(open: boolean): void {
+  if (!app.isPackaged) return
+  if (process.platform !== 'win32' && process.platform !== 'darwin') return
+  try {
+    app.setLoginItemSettings({ openAtLogin: open })
+  } catch (error) {
+    console.warn('[app] 设置开机自启失败（忽略）', error)
+  }
+}
+
 function applySkinToChrome(skin: Skin): void {
   const overlay = {
     color: '#00000000',
@@ -694,9 +709,13 @@ function registerIpc(): void {
 
   ipcMain.handle('store:set-prefs', async (_e, patch: Record<string, unknown>) => {
     // 只认已知键 + 正确类型，避免 closeToTray: "false" 这种脏值被永久写盘
-    const clean: { closeToTray?: boolean } = {}
+    const clean: { closeToTray?: boolean; openAtLogin?: boolean } = {}
     if (isRecord(patch) && typeof patch['closeToTray'] === 'boolean') {
       clean.closeToTray = patch['closeToTray']
+    }
+    if (isRecord(patch) && typeof patch['openAtLogin'] === 'boolean') {
+      clean.openAtLogin = patch['openAtLogin']
+      applyLoginItem(clean.openAtLogin)
     }
     const next = await store.setPrefs(clean)
     tray?.setContextMenu(buildTrayMenu())
@@ -927,6 +946,8 @@ function registerIpc(): void {
 void app.whenReady().then(async () => {
   app.setAppUserModelId('com.timecard.desktop')
   await store.init()
+  // 让系统登录项与已保存的偏好一致（打包版才真的生效）
+  applyLoginItem(store.prefs().openAtLogin === true)
 
   registerIpc()
   createMainWindow()

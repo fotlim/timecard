@@ -13,6 +13,14 @@ function dayText(ts: number): string {
   return `${d.getMonth() + 1}月${d.getDate()}日`
 }
 
+/** 命中条目时给出片段，让用户知道"为什么这条被搜出来" */
+function matchedItem(card: Card, query: string): string | null {
+  const hit = card.items.find((i) => i.text.toLowerCase().includes(query))
+  if (!hit) return null
+  const text = hit.text.trim()
+  return text.length > 28 ? `${text.slice(0, 28)}…` : text
+}
+
 export function SearchOverlay({
   cards,
   open,
@@ -43,7 +51,9 @@ export function SearchOverlay({
           (c) =>
             c.deletedAt === null &&
             (c.title.toLowerCase().includes(query) ||
-              (c.tag || '').toLowerCase().includes(query))
+              (c.tag || '').toLowerCase().includes(query) ||
+              // 条目内容也搜 —— 常常记得的是"卡里写了什么"，而不是标题
+              c.items.some((i) => i.text.toLowerCase().includes(query)))
         )
         .sort((a, b) => b.anchorAt - a.anchorAt)
         .slice(0, 60)
@@ -89,23 +99,27 @@ export function SearchOverlay({
           ) : results.length === 0 ? (
             <p className="tsearch-hint">没有匹配的卡片</p>
           ) : (
-            results.map((c) => (
-              <button key={c.id} className="tsearch-row" onClick={() => pick(c)}>
-                <span className="tsearch-row-main">
-                  <span className="tsearch-row-title">{c.title || '（无标题）'}</span>
-                  <span className="tsearch-row-meta">
-                    {dayText(c.anchorAt)}
-                    {c.tag ? ' · ' + c.tag : ''}
-                    {c.status === 'archived'
-                      ? ' · 已归档'
-                      : c.status === 'done'
-                        ? ' · 已完成'
-                        : ''}
+            results.map((c) => {
+              const snippet = matchedItem(c, query)
+              return (
+                <button key={c.id} className="tsearch-row" onClick={() => pick(c)}>
+                  <span className="tsearch-row-main">
+                    <span className="tsearch-row-title">{c.title || '（无标题）'}</span>
+                    <span className="tsearch-row-meta">
+                      {dayText(c.anchorAt)}
+                      {c.tag ? ' · ' + c.tag : ''}
+                      {c.status === 'archived'
+                        ? ' · 已归档'
+                        : c.status === 'done'
+                          ? ' · 已完成'
+                          : ''}
+                      {snippet && <span className="tsearch-row-hit"> · 条目「{snippet}」</span>}
+                    </span>
                   </span>
-                </span>
-                <span className="tsearch-row-day">{new Date(c.anchorAt).getDate()}</span>
-              </button>
-            ))
+                  <span className="tsearch-row-day">{new Date(c.anchorAt).getDate()}</span>
+                </button>
+              )
+            })
           )}
         </div>
       </div>

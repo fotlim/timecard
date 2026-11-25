@@ -348,6 +348,21 @@ export function SettingsWindow(): React.JSX.Element {
               <span className="knob" />
             </button>
           </div>
+
+          <div className="srow">
+            <div className="srow-main">
+              <span className="srow-title">开机自动启动</span>
+              <span className="srow-desc">登录 Windows 后自动开在后台，按快捷键就能挂卡</span>
+            </div>
+            <button
+              className={`stoggle${store.prefs.openAtLogin ? ' on' : ''}`}
+              role="switch"
+              aria-checked={store.prefs.openAtLogin === true}
+              onClick={() => store.setPrefs({ openAtLogin: !store.prefs.openAtLogin })}
+            >
+              <span className="knob" />
+            </button>
+          </div>
         </section>
 
         {/* ---------- 数据 ---------- */}
