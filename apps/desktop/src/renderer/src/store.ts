@@ -22,7 +22,12 @@ export interface Store {
   moveCard: (cardId: string, anchorAt: number) => void
   patchCard: (
     cardId: string,
-    patch: { title?: string; tag?: string; items?: Array<{ id: string; text: string; done: boolean }> }
+    patch: {
+      title?: string
+      tag?: string
+      color?: string
+      items?: Array<{ id: string; text: string; done: boolean }>
+    }
   ) => void
   restoreCard: (cardId: string) => void
   /** 归档 / 取消归档 */
@@ -126,7 +131,12 @@ export function useStore(): Store {
   const patchCard = useCallback(
     (
       cardId: string,
-      patch: { title?: string; tag?: string; items?: Array<{ id: string; text: string; done: boolean }> }
+      patch: {
+        title?: string
+        tag?: string
+        color?: string
+        items?: Array<{ id: string; text: string; done: boolean }>
+      }
     ) => {
       void bridge().store.patchCard(cardId, patch)
     },

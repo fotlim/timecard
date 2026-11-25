@@ -15,6 +15,7 @@ export function SettingsWindow(): React.JSX.Element {
   const store = useStore()
   const [info, setInfo] = useState<AppInfo | null>(null)
   const [confirm, setConfirm] = useState<'reset' | 'clear' | 'outbox' | null>(null)
+  const [backupMsg, setBackupMsg] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
   // 服务器地址 / 令牌先存在本地草稿里，点「保存」才真正落盘。
@@ -384,6 +385,56 @@ export function SettingsWindow(): React.JSX.Element {
               打开文件夹
             </button>
           </div>
+
+          <div className="srow">
+            <div className="srow-main">
+              <span className="srow-title">导出备份</span>
+              <span className="srow-desc">
+                存成 JSON 文件（不含同步令牌），可留档或换机迁移
+              </span>
+            </div>
+            <button
+              className="sbtn"
+              onClick={() => {
+                void window.timecard?.data.exportTo().then((r) => {
+                  setBackupMsg(r.ok ? `已导出：${r.path}` : r.canceled ? null : `导出失败：${r.error}`)
+                })
+              }}
+            >
+              导出…
+            </button>
+          </div>
+
+          <div className="srow">
+            <div className="srow-main">
+              <span className="srow-title">从备份导入</span>
+              <span className="srow-desc">按卡片 id 合并：同 id 只保留更新的一份，不会清空现有卡片</span>
+            </div>
+            <button
+              className="sbtn"
+              onClick={() => {
+                void window.timecard?.data.importFrom().then((r) => {
+                  if (!r.ok) {
+                    setBackupMsg(r.canceled ? null : `导入失败：${r.error}`)
+                    return
+                  }
+                  setBackupMsg(
+                    `导入完成：新增 ${r.added ?? 0} · 更新 ${r.updated ?? 0} · 跳过 ${r.skipped ?? 0}`
+                  )
+                })
+              }}
+            >
+              导入…
+            </button>
+          </div>
+
+          {backupMsg && (
+            <div className="srow">
+              <div className="srow-main">
+                <span className="srow-desc srow-path">{backupMsg}</span>
+              </div>
+            </div>
+          )}
 
           <div className="srow">
             <div className="srow-main">

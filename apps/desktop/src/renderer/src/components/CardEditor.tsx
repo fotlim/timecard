@@ -5,6 +5,18 @@ import { closeEditor, getEditorSnapshot, subscribeEditor } from '../editor-store
 import { useSyncExternalStore } from 'react'
 import type { Store } from '../store'
 
+/** 卡片可选主色（和示例数据、三套皮肤都协调的低饱和色） */
+const CARD_COLORS: Array<{ value: string; label: string }> = [
+  { value: '#71805a', label: '苔绿' },
+  { value: '#b3613a', label: '陶土' },
+  { value: '#4472a0', label: '靛蓝' },
+  { value: '#b0801f', label: '赭金' },
+  { value: '#6c69f2', label: '鸢尾' },
+  { value: '#4d8a5c', label: '松绿' },
+  { value: '#8c7440', label: '胡桃' },
+  { value: '#a8564f', label: '砖红' }
+]
+
 /**
  * 卡片编辑弹层。
  * 条目整表提交 —— 增删改都在本地数组里做，点「保存」一次性 patch，
@@ -16,6 +28,7 @@ export function CardEditor({ store }: { store: Store }): React.JSX.Element | nul
 
   const [title, setTitle] = useState('')
   const [tag, setTag] = useState('')
+  const [color, setColor] = useState('#71805a')
   const [items, setItems] = useState<CardItem[]>([])
   const [anchorAt, setAnchorAt] = useState(0)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -29,6 +42,7 @@ export function CardEditor({ store }: { store: Store }): React.JSX.Element | nul
     seededFor.current = card.id
     setTitle(card.title)
     setTag(card.tag)
+    setColor(card.color || '#71805a')
     setItems(card.items.map((i) => ({ ...i })))
     setAnchorAt(card.anchorAt)
     setConfirmDelete(false)
@@ -60,7 +74,7 @@ export function CardEditor({ store }: { store: Store }): React.JSX.Element | nul
       titleRef.current?.focus()
       return
     }
-    store.patchCard(card.id, { title, tag, items })
+    store.patchCard(card.id, { title, tag, color, items })
     // 日期没改就别再发一次 moveCard：白跑一条 IPC、多一次 rev 跳变，
     // 还会在 Outbox 里多排一条没必要的更新
     if (anchorAt !== card.anchorAt) store.moveCard(card.id, anchorAt)
@@ -129,6 +143,21 @@ export function CardEditor({ store }: { store: Store }): React.JSX.Element | nul
           placeholder="分类，如「家庭」「工作」（可留空）"
           onChange={(e) => setTag(e.target.value)}
         />
+
+        {/* 卡片主色：只影响卡片左侧色条，不动皮肤 */}
+        <div className="editor-colors" role="group" aria-label="卡片颜色">
+          {CARD_COLORS.map((c) => (
+            <button
+              key={c.value}
+              className={`editor-color${color.toLowerCase() === c.value.toLowerCase() ? ' on' : ''}`}
+              style={{ '--c': c.value } as React.CSSProperties}
+              title={c.label}
+              aria-label={c.label}
+              aria-pressed={color.toLowerCase() === c.value.toLowerCase()}
+              onClick={() => setColor(c.value)}
+            />
+          ))}
+        </div>
 
         <div className="editor-dates">
           {dateChips.map((c) => (

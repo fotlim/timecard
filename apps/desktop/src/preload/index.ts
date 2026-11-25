@@ -148,6 +148,23 @@ const api = {
     return () => ipcRenderer.removeListener('ui:open-composer', handler)
   },
 
+  /* --- 备份 --- */
+  data: {
+    exportTo: (path?: string): Promise<{ ok: boolean; canceled?: boolean; path?: string; bytes?: number; error?: string }> =>
+      ipcRenderer.invoke('data:export', path),
+    importFrom: (
+      path?: string
+    ): Promise<{
+      ok: boolean
+      canceled?: boolean
+      added?: number
+      updated?: number
+      skipped?: number
+      path?: string
+      error?: string
+    }> => ipcRenderer.invoke('data:import', path)
+  },
+
   /* --- 主窗口控制 --- */
   minimize: (): Promise<void> => ipcRenderer.invoke('window:minimize'),
   toggleMaximize: (): Promise<void> => ipcRenderer.invoke('window:toggle-maximize'),

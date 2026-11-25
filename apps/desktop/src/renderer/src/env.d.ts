@@ -76,7 +76,12 @@ export interface TimecardApi {
     moveCard: (cardId: string, anchorAt: number) => Promise<Snapshot>
     patchCard: (
       cardId: string,
-      patch: { title?: string; tag?: string; items?: Array<{ id: string; text: string; done: boolean }> }
+      patch: {
+        title?: string
+        tag?: string
+        color?: string
+        items?: Array<{ id: string; text: string; done: boolean }>
+      }
     ) => Promise<Snapshot>
     restoreCard: (cardId: string) => Promise<Snapshot>
     setArchived: (cardId: string, archived: boolean) => Promise<Snapshot>
@@ -87,6 +92,22 @@ export interface TimecardApi {
 
   info: () => Promise<AppInfo>
   openDataFolder: () => Promise<void>
+  data: {
+    exportTo: (
+      path?: string
+    ) => Promise<{ ok: boolean; canceled?: boolean; path?: string; bytes?: number; error?: string }>
+    importFrom: (
+      path?: string
+    ) => Promise<{
+      ok: boolean
+      canceled?: boolean
+      added?: number
+      updated?: number
+      skipped?: number
+      path?: string
+      error?: string
+    }>
+  }
   retrySave: () => Promise<{ error: string | null; lastSavedAt: number | null }>
   quitApp: () => Promise<void>
   focusMain: () => Promise<void>

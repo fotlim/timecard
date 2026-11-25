@@ -135,6 +135,50 @@ html[data-theme='neo'] .editor-title {
   color: var(--muted);
 }
 
+/* ---------- 卡片主色 ---------- */
+.editor-colors {
+  display: flex;
+  gap: 8px;
+  padding: 10px 0 2px;
+  flex-wrap: wrap;
+}
+.editor-color {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--c);
+  border: var(--bw) solid transparent;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--c) 35%, transparent) inset;
+  transition: transform 0.12s, box-shadow 0.12s;
+  position: relative;
+}
+.editor-color:hover {
+  transform: scale(1.12);
+}
+.editor-color.on {
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--c);
+}
+html[data-theme='brutal'] .editor-color {
+  border-radius: 0;
+  border: 1.5px solid var(--line);
+}
+html[data-theme='brutal'] .editor-color.on {
+  box-shadow: 2px 2px 0 var(--line);
+  outline: 2px solid var(--line);
+  outline-offset: 1px;
+}
+html[data-theme='neo'] .editor-color {
+  box-shadow: var(--shadow);
+}
+html[data-theme='neo'] .editor-color.on {
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--c),
+    var(--shadow);
+}
+
 /* ---------- 日期快选 ---------- */
 .editor-dates {
   display: flex;

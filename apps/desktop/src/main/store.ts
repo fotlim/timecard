@@ -490,7 +490,12 @@ class Store {
    */
   async patchCard(
     cardId: string,
-    patch: { title?: string; tag?: string; items?: Array<{ id: string; text: string; done: boolean }> }
+    patch: {
+      title?: string
+      tag?: string
+      color?: string
+      items?: Array<{ id: string; text: string; done: boolean }>
+    }
   ): Promise<Snapshot> {
     const prev = this.cardById(cardId)
     if (!prev) return this.snapshot()
@@ -517,6 +522,11 @@ class Store {
       ...prev,
       title,
       tag: patch.tag !== undefined ? patch.tag.trim() : prev.tag,
+      // 颜色只接受 #rgb / #rrggbb，脏值直接忽略（别把 CSS 变量或空串写进数据）
+      color:
+        patch.color !== undefined && /^#[0-9a-fA-F]{3,8}$/.test(patch.color)
+          ? patch.color
+          : prev.color,
       items,
       status,
       updatedAt: Date.now(),
@@ -569,6 +579,101 @@ class Store {
     const next: Card = { ...prev, deletedAt: null, updatedAt: Date.now(), rev: prev.rev + 1 }
     this.putCard(next, 'restore')
     return this.snapshot()
+  }
+
+  /* ============================================================
+   * 备份：导出 / 导入
+   * ========================================================== */
+
+  /**
+   * 导出成备份文本。
+   *
+   * 刻意**不含同步令牌**：备份文件常被放到网盘/U 盘，把密钥捎出去是最容易踩的坑。
+   * 卡片（含墓碑）全量导出，保证「删掉的卡」在恢复后也不会复活。
+   */
+  exportData(): string {
+    return JSON.stringify(
+      {
+        format: 'timecard-backup',
+        version: 1,
+        exportedAt: Date.now(),
+        skin: this.data.skin,
+        prefs: this.data.prefs,
+        cards: this.data.cards
+      },
+      null,
+      2
+    )
+  }
+
+  /**
+   * 从备份导入：按卡片 id 合并，同一张卡保留 `updatedAt` 更新的那份。
+   *
+   * 用合并而不是「清空再导入」，是为了防手滑：导入旧备份不会把现有新卡抹掉。
+   */
+  importData(raw: string): { added: number; updated: number; skipped: number; error: string | null } {
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(raw)
+    } catch {
+      return { added: 0, updated: 0, skipped: 0, error: '不是合法的 JSON' }
+    }
+    if (typeof parsed !== 'object' || parsed === null) {
+      return { added: 0, updated: 0, skipped: 0, error: '备份内容格式不对' }
+    }
+    const obj = parsed as { cards?: unknown }
+    if (!Array.isArray(obj.cards)) {
+      return { added: 0, updated: 0, skipped: 0, error: '备份里没有 cards 数组' }
+    }
+
+    let added = 0
+    let updated = 0
+    let skipped = 0
+    for (const item of obj.cards) {
+      const card = item as Card
+      if (
+        !card ||
+        typeof card.id !== 'string' ||
+        typeof card.title !== 'string' ||
+        typeof card.anchorAt !== 'number' ||
+        typeof card.updatedAt !== 'number'
+      ) {
+        skipped += 1
+        continue
+      }
+      const local = this.cardById(card.id)
+      if (!local) {
+        const fresh: Card = {
+          ...card,
+          items: Array.isArray(card.items) ? card.items : [],
+          deletedAt: typeof card.deletedAt === 'number' ? card.deletedAt : null
+        }
+        this.putCard(fresh, 'create')
+        added += 1
+        continue
+      }
+      const incomingLive = (card.deletedAt ?? null) === null
+      // 本地是墓碑、备份里是活的 → 直接恢复。
+      // 只按 updatedAt 比的话，"清空全部"之后再导入会把所有卡判成旧的，
+      // 备份就白导了 —— 用户点导入就是想把这些卡找回来。
+      if (!incomingLive) {
+        if (card.updatedAt > local.updatedAt) {
+          this.putCard(card, this.opFor(card, local))
+          updated += 1
+        } else {
+          skipped += 1
+        }
+        continue
+      }
+      if (local.deletedAt !== null || card.updatedAt > local.updatedAt) {
+        this.putCard(card, this.opFor(card, local))
+        updated += 1
+      } else {
+        skipped += 1
+      }
+    }
+    this.scheduleSave()
+    return { added, updated, skipped, error: null }
   }
 
   async reset(): Promise<Snapshot> {

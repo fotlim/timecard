@@ -127,6 +127,24 @@ export default function App(): React.JSX.Element {
   const [sheet, setSheet] = useState<Sheet>(null)
   const prevToday = useRef(today)
 
+  // 下拉刷新：列表在顶部时往下拽，松手触发一次同步
+  const listRef = useRef<HTMLDivElement>(null)
+  const pullStart = useRef<number | null>(null)
+  const [pull, setPull] = useState(0)
+  const [pullBusy, setPullBusy] = useState(false)
+  const [pullMsg, setPullMsg] = useState<string | null>(null)
+  const PULL_TRIGGER = 56
+
+  const doPullRefresh = async (): Promise<void> => {
+    setPullBusy(true)
+    setPull(PULL_TRIGGER)
+    const report = await syncNow()
+    setPullBusy(false)
+    setPullMsg(report.ok ? '已同步' : '同步失败')
+    setPull(0)
+    setTimeout(() => setPullMsg(null), 1200)
+  }
+
   const allLive = useMemo(() => state.cards.filter((c) => c.deletedAt === null), [state.cards])
   const live = useMemo(() => allLive.filter((c) => c.status !== 'archived'), [allLive])
 
@@ -315,30 +333,66 @@ export default function App(): React.JSX.Element {
       </div>
 
       {/* 三 · 卡片 */}
-      <div className="m-list">
-        {rows.length === 0 ? (
-          <button className="card new" onClick={() => setSheet({ kind: 'compose', anchorAt: day })}>
-            <strong>＋ 挂一张</strong>
-            <span>{filter === 'all' ? '想到什么就挂什么' : '这一类今天是空的'}</span>
-          </button>
-        ) : (
-          <>
-            {rows.map((card, i) => (
-              <div key={card.id} className="card-slot" style={{ '--i': i } as React.CSSProperties}>
-                <HangCard
-                  card={card}
-                  onToggleItem={db.toggleItem}
-                  onOpen={() => setSheet({ kind: 'edit', cardId: card.id })}
-                />
-              </div>
-            ))}
+      <div className="m-list-wrap">
+        {(pull > 0 || pullMsg) && (
+          <div
+            className={`m-pull${pullBusy ? ' busy' : ''}${pull >= PULL_TRIGGER ? ' ready' : ''}`}
+            style={{ height: Math.max(pull, pullMsg ? 32 : 0) }}
+            aria-live="polite"
+          >
+            <span>
+              {pullMsg ?? (pullBusy ? '同步中…' : pull >= PULL_TRIGGER ? '松手同步' : '下拉同步')}
+            </span>
+          </div>
+        )}
+        <div
+          className="m-list"
+          ref={listRef}
+          onTouchStart={(e) => {
+            if ((listRef.current?.scrollTop ?? 0) > 0) return
+            pullStart.current = e.touches[0]?.clientY ?? null
+          }}
+          onTouchMove={(e) => {
+            if (pullStart.current === null || pullBusy) return
+            const dy = (e.touches[0]?.clientY ?? 0) - pullStart.current
+            if (dy <= 0) {
+              setPull(0)
+              return
+            }
+            // 阻尼：手指移动 2px，指示条长 1px，最多 80
+            setPull(Math.min(80, dy * 0.5))
+          }}
+          onTouchEnd={() => {
+            const reached = pull >= PULL_TRIGGER
+            pullStart.current = null
+            if (reached && !pullBusy) void doPullRefresh()
+            else setPull(0)
+          }}
+        >
+          {rows.length === 0 ? (
             <button className="card new" onClick={() => setSheet({ kind: 'compose', anchorAt: day })}>
               <strong>＋ 挂一张</strong>
-              <span>想到什么就挂什么</span>
+              <span>{filter === 'all' ? '想到什么就挂什么' : '这一类今天是空的'}</span>
             </button>
-            <p className="m-empty">— 这一天到此为止，别再塞了 —</p>
-          </>
-        )}
+          ) : (
+            <>
+              {rows.map((card, i) => (
+                <div key={card.id} className="card-slot" style={{ '--i': i } as React.CSSProperties}>
+                  <HangCard
+                    card={card}
+                    onToggleItem={db.toggleItem}
+                    onOpen={() => setSheet({ kind: 'edit', cardId: card.id })}
+                  />
+                </div>
+              ))}
+              <button className="card new" onClick={() => setSheet({ kind: 'compose', anchorAt: day })}>
+                <strong>＋ 挂一张</strong>
+                <span>想到什么就挂什么</span>
+              </button>
+              <p className="m-empty">— 这一天到此为止，别再塞了 —</p>
+            </>
+          )}
+        </div>
       </div>
 
       {/* 四 · 底栏 */}

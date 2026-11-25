@@ -137,11 +137,27 @@ const setInput = (sel, value) => `
       check('编辑器带出原条目', vals.items === 2 || vals.items >= 1, `${vals.items} 条`)
     }
 
-    /* ---------- 3. 改标题 + 改分类 ---------- */
+    /* ---------- 3. 改标题 + 改分类 + 改颜色 ---------- */
     {
       await c.eval(setInput('.editor-title', '改过的标题'))
       await c.eval(setInput('.editor-tag', '改过的分类'))
       await sleep(200)
+
+      const swatches = await c.eval(`document.querySelectorAll('.editor-color').length`)
+      check('编辑器有配色圆点', swatches >= 6, `count=${swatches}`)
+
+      // 点「陶土」（#b3613a）并保存
+      await c.eval(`
+        (() => {
+          const b = [...document.querySelectorAll('.editor-color')]
+            .find(x => (x.getAttribute('title') || '').includes('陶土'));
+          if (!b) return false;
+          b.click();
+          return true;
+        })()
+      `)
+      await sleep(200)
+
       await c.eval(`(() => { const b = [...document.querySelectorAll('.editor-btn')].find(x => x.textContent.trim() === '保存'); b && b.click(); return 'ok' })()`)
       await sleep(800)
 
@@ -149,6 +165,7 @@ const setInput = (sel, value) => `
       const card = local.cards.find((x) => x.title === '改过的标题')
       check('标题改成功', !!card, card ? card.title : '没找到')
       check('分类改成功', card?.tag === '改过的分类', card?.tag)
+      check('颜色改成功', card?.color?.toLowerCase() === '#b3613a', card?.color)
       check('保存后编辑器关闭', await c.eval(`!document.querySelector('.editor-box')`))
       check('改动进了同步队列', local.outbox.length > 0, `outbox=${local.outbox.length}`)
     }

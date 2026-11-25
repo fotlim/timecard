@@ -1,6 +1,7 @@
 import {
   app,
   BrowserWindow,
+  dialog,
   globalShortcut,
   ipcMain,
   Menu,
@@ -10,7 +11,7 @@ import {
   Tray
 } from 'electron'
 import { existsSync, mkdirSync } from 'node:fs'
-import { writeFile } from 'node:fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { store } from './store'
 import {
@@ -782,6 +783,55 @@ function registerIpc(): void {
   }))
 
   ipcMain.handle('app:open-data-folder', () => void shell.openPath(store.dataDir))
+
+  /* --- 备份导出 / 导入 --- */
+  ipcMain.handle('data:export', async (_e, explicitPath?: unknown) => {
+    let target: string | undefined
+    if (typeof explicitPath === 'string' && explicitPath) {
+      target = explicitPath
+    } else {
+      const stamp = new Date().toISOString().slice(0, 10)
+      const res = await dialog.showSaveDialog({
+        title: '导出备份',
+        defaultPath: `timecard-backup-${stamp}.json`,
+        filters: [{ name: 'JSON 备份', extensions: ['json'] }]
+      })
+      if (res.canceled || !res.filePath) return { ok: false, canceled: true }
+      target = res.filePath
+    }
+    try {
+      await writeFile(target, store.exportData(), 'utf-8')
+      return { ok: true, path: target, bytes: Buffer.byteLength(store.exportData(), 'utf-8') }
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) }
+    }
+  })
+
+  ipcMain.handle('data:import', async (_e, explicitPath?: unknown) => {
+    let source: string | undefined
+    if (typeof explicitPath === 'string' && explicitPath) {
+      source = explicitPath
+    } else {
+      const res = await dialog.showOpenDialog({
+        title: '从备份导入',
+        properties: ['openFile'],
+        filters: [{ name: 'JSON 备份', extensions: ['json'] }]
+      })
+      if (res.canceled || res.filePaths.length === 0) return { ok: false, canceled: true }
+      source = res.filePaths[0]
+    }
+    try {
+      const raw = await readFile(source, 'utf-8')
+      const result = store.importData(raw)
+      if (result.error) return { ok: false, error: result.error }
+      const next = store.snapshot()
+      await emit(next)
+      return { ok: true, ...result, path: source }
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) }
+    }
+  })
+
   ipcMain.handle('app:retry-save', async () => {
     await store.retrySave()
     return store.saveState()
@@ -878,11 +928,13 @@ function registerIpc(): void {
     const clean: {
       title?: string
       tag?: string
+      color?: string
       items?: Array<{ id: string; text: string; done: boolean }>
     } = {}
     if (isRecord(patch)) {
       if (typeof patch['title'] === 'string') clean.title = patch['title']
       if (typeof patch['tag'] === 'string') clean.tag = patch['tag']
+      if (typeof patch['color'] === 'string') clean.color = patch['color']
       const items = cleanItems(patch['items'])
       if (items) clean.items = items
     }
