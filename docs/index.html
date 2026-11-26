@@ -9,7 +9,7 @@
 <meta property="og:title" content="挂卡时间轴 · Timecard" />
 <meta property="og:description" content="把待办挂在时间轴上，而不是塞进一长串列表。桌面端 + 手机端 + 自托管同步，MIT 开源。" />
 <meta property="og:type" content="website" />
-<meta property="og:image" content="screenshots/desktop-organic.png" />
+<meta property="og:image" content="https://fotlim.github.io/timecard/screenshots/desktop-organic.png" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 28'%3E%3Cpath d='M12 14 L2 5 L4.5 14 L2 23 Z' fill='%2371805a'/%3E%3Cellipse cx='23' cy='14' rx='13.5' ry='9.5' fill='%2371805a'/%3E%3Ccircle cx='29.5' cy='10.5' r='1.9' fill='%23fbf7ee'/%3E%3C/svg%3E" />
 <style>
 @font-face{font-family:'Instrument Serif';src:url(fonts/instrumentserif-400.woff2) format('woff2');font-weight:400;font-display:swap}
@@ -150,7 +150,11 @@ section{padding:64px 0}
 .shots{display:flex;justify-content:center;align-items:flex-start;gap:clamp(16px,3vw,34px);flex-wrap:wrap}
 .shot{border:var(--bw) solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--surface);box-shadow:var(--shadow)}
 html[data-skin='brutal'] .shot{box-shadow:var(--shadow-lift)}
-.shot img{width:100%;height:auto}
+.shot{position:relative}
+.shot img{width:100%;height:auto;background:linear-gradient(160deg,var(--surface-2),var(--surface) 55%,var(--surface-2))}
+.shot-fb{display:grid;place-content:center;text-align:center;gap:4px;padding:44px 18px;color:var(--muted);font-size:13px;background:var(--surface-2);border-bottom:var(--bw) solid var(--line)}
+.shot-fb small{font-family:var(--font-label);font-size:11px;opacity:.8}
+.shot-fb[hidden]{display:none}
 .shot-cap{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;border-top:var(--bw) solid var(--line);
   font-family:var(--font-label);font-size:11.5px;color:var(--muted);background:var(--surface-2)}
 .shot.desktop{width:min(420px,100%)}
@@ -324,11 +328,19 @@ footer{border-top:var(--bw) solid var(--line);padding:34px 0 46px;color:var(--mu
       </div>
       <div class="shots">
         <figure class="shot desktop" style="margin:0">
-          <img id="shot-desktop" src="screenshots/desktop-organic.png" alt="桌面端今日视图" width="1440" height="960" loading="lazy" />
+          <div class="shot-fb" hidden>截图没加载出来 · 网络不太行？<br /><small>原图在仓库 docs/screenshots/ 里</small></div>
+        <img id="shot-desktop" data-w="420,840" src="screenshots/desktop-organic-840.webp"
+             srcset="screenshots/desktop-organic-420.webp 420w, screenshots/desktop-organic-840.webp 840w"
+             sizes="(max-width:640px) 100vw, 420px" width="840" height="1520"
+             alt="桌面端今日视图" loading="lazy" decoding="async" />
           <figcaption class="shot-cap"><span>桌面端 · 今日视图</span><span id="shot-desktop-tag">organic</span></figcaption>
         </figure>
         <figure class="shot phone" style="margin:0">
-          <img id="shot-mobile" src="screenshots/mobile-organic.png" alt="手机端今日视图" width="824" height="1784" loading="lazy" />
+          <div class="shot-fb" hidden>截图没加载出来 · 网络不太行？</div>
+          <img id="shot-mobile" data-w="250,500" src="screenshots/mobile-organic-500.webp"
+               srcset="screenshots/mobile-organic-250.webp 250w, screenshots/mobile-organic-500.webp 500w"
+               sizes="(max-width:640px) 72vw, 250px" width="824" height="1784"
+               alt="手机端今日视图" loading="lazy" decoding="async" />
           <figcaption class="shot-cap"><span>手机端 · 今日</span><span>412px</span></figcaption>
         </figure>
       </div>
@@ -421,7 +433,11 @@ TIMECARD_TOKEN=$TIMECARD_TOKEN node Timecard-0.1.4-server.mjs
         </div>
       </div>
       <figure class="shot console-shot" style="margin:26px auto 0">
-        <img src="screenshots/server-panel-light.png" alt="服务器 Web 控制台" width="1440" height="1040" loading="lazy" />
+        <div class="shot-fb" hidden>控制台截图没加载出来 · 网络不太行？</div>
+        <img src="screenshots/server-panel-light-1440.webp"
+             srcset="screenshots/server-panel-light-720.webp 720w, screenshots/server-panel-light-1440.webp 1440w"
+             sizes="(max-width:940px) 100vw, 1040px" width="1440" height="1040"
+             alt="服务器 Web 控制台" loading="lazy" decoding="async" />
         <figcaption class="shot-cap"><span>服务器 · Web 控制台（令牌保护）</span><span>v0.2.1</span></figcaption>
       </figure>
     </div>
@@ -500,6 +516,7 @@ TIMECARD_TOKEN=$TIMECARD_TOKEN node Timecard-0.1.4-server.mjs
       <a href="https://github.com/fotlim/timecard">源码</a>
       <a href="https://github.com/fotlim/timecard/blob/main/docs/USAGE.md">使用说明</a>
       <a href="https://github.com/fotlim/timecard/releases">版本记录</a>
+      <a href="standalone.html">单文件版</a>
       <a href="https://github.com/fotlim/timecard/issues">反馈</a>
     </div>
     <div>把要做的事，挂在时间上。</div>
@@ -508,16 +525,18 @@ TIMECARD_TOKEN=$TIMECARD_TOKEN node Timecard-0.1.4-server.mjs
 
 <script>
 (function () {
-  var SKINS = {
-    organic: 'desktop-organic.png',
-    brutal: 'desktop-brutal.png',
-    neo: 'desktop-neo.png'
-  };
-  var MOBILE = {
-    organic: 'mobile-organic.png',
-    brutal: 'mobile-brutal.png',
-    neo: 'mobile-neo.png'
-  };
+  var SKINS = { organic: 'desktop-organic', brutal: 'desktop-brutal', neo: 'desktop-neo' };
+  var MOBILE = { organic: 'mobile-organic', brutal: 'mobile-brutal', neo: 'mobile-neo' };
+
+  // 按 data-w 的宽度列表拼 srcset，只加载当前皮肤那一套
+  function setPic(el, base) {
+    if (!el) return;
+    var widths = (el.dataset.w || '840').split(',');
+    el.srcset = widths
+      .map(function (w) { return 'screenshots/' + base + '-' + w + '.webp ' + w + 'w'; })
+      .join(', ');
+    el.src = 'screenshots/' + base + '-' + widths[widths.length - 1] + '.webp';
+  }
   var root = document.documentElement;
   var buttons = Array.prototype.slice.call(document.querySelectorAll('.skins button'));
 
@@ -530,8 +549,8 @@ TIMECARD_TOKEN=$TIMECARD_TOKEN node Timecard-0.1.4-server.mjs
     var d = document.getElementById('shot-desktop');
     var m = document.getElementById('shot-mobile');
     var tag = document.getElementById('shot-desktop-tag');
-    if (d) d.src = 'screenshots/' + SKINS[skin];
-    if (m) m.src = 'screenshots/' + MOBILE[skin];
+    setPic(d, SKINS[skin]);
+    setPic(m, MOBILE[skin]);
     if (tag) tag.textContent = skin;
     try { localStorage.setItem('timecard.site.skin', skin); } catch (e) {}
   }
@@ -542,6 +561,15 @@ TIMECARD_TOKEN=$TIMECARD_TOKEN node Timecard-0.1.4-server.mjs
 
   buttons.forEach(function (b) {
     b.addEventListener('click', function () { apply(b.dataset.skin); });
+  });
+
+  // 图挂了别留破图标：退成一句人话（弱网 / 离线打开）
+  Array.prototype.forEach.call(document.querySelectorAll('.shot img'), function (img) {
+    img.addEventListener('error', function () {
+      img.hidden = true;
+      var fb = img.parentNode.querySelector('.shot-fb');
+      if (fb) fb.hidden = false;
+    });
   });
 
   // 复制服务器命令
