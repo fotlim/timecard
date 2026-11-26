@@ -532,6 +532,7 @@ function SheetShell({
   dateLabel: dateText,
   onClose,
   dirty = false,
+  notice,
   children,
   foot
 }: {
@@ -540,6 +541,8 @@ function SheetShell({
   onClose: () => void
   /** 有未保存内容时，点遮罩不许直接关（先问一句） */
   dirty?: boolean
+  /** 贴在底部按钮行「上方」的一条提示条（如删除确认）：不塞进按钮行，按钮位子一个都不挪 */
+  notice?: React.ReactNode
   children: React.ReactNode
   foot: React.ReactNode
 }): React.JSX.Element {
@@ -562,6 +565,7 @@ function SheetShell({
           {dateText && <span className="sheet-date">{dateText}</span>}
         </div>
         <div className="sheet-body">{children}</div>
+        {notice}
         {confirmClose && (
           <div className="sheet-confirm" role="alertdialog">
             <span>还有没保存的内容</span>
@@ -805,6 +809,26 @@ function EditSheet({
       dateLabel={`${dayLabel(at)} · ${dayKey(at)}`}
       dirty={dirty}
       onClose={onClose}
+      notice={
+        /* 确认删除放在按钮行「上方」的提示条里：按钮一个都不挪，也不会冒出第二个「取消」 */
+        confirmDel ? (
+          <div className="sheet-confirm danger" role="alertdialog" aria-label="确认删除卡片">
+            <span>删除「{card.title.trim() || '这张卡'}」？</span>
+            <button className="sheet-btn" onClick={() => setConfirmDel(false)}>
+              取消
+            </button>
+            <button
+              className="sheet-btn danger"
+              onClick={() => {
+                db.removeCard(card.id)
+                onClose()
+              }}
+            >
+              删除
+            </button>
+          </div>
+        ) : null
+      }
       foot={
         <>
           <button
@@ -816,26 +840,13 @@ function EditSheet({
           >
             {card.status === 'archived' ? '取消归档' : '归档'}
           </button>
-          {confirmDel ? (
-            <>
-              <button
-                className="sheet-btn danger"
-                onClick={() => {
-                  db.removeCard(card.id)
-                  onClose()
-                }}
-              >
-                确定删除
-              </button>
-              <button className="sheet-btn" onClick={() => setConfirmDel(false)}>
-                取消
-              </button>
-            </>
-          ) : (
-            <button className="sheet-btn danger-ghost" onClick={() => setConfirmDel(true)}>
-              删除
-            </button>
-          )}
+          <button
+            className={`sheet-btn danger-ghost${confirmDel ? ' on' : ''}`}
+            aria-expanded={confirmDel}
+            onClick={() => setConfirmDel((v) => !v)}
+          >
+            删除
+          </button>
           <span className="sp" />
           <button className="sheet-btn" onClick={onClose}>
             取消
