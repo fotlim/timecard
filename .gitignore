@@ -15,6 +15,7 @@ apps/mobile/ios/
 apps/mobile/.gradle/
 *.keystore
 *.jks
+key.properties
 
 # --- 数据（本地开发库） ---
 *.sqlite

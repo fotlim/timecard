@@ -1,0 +1,12 @@
+# 复制成 android/key.properties 后填自己的值（这个文件已在 .gitignore 里，不会进仓库）
+# 没有它时 release 会退化成 debug 签名，本地自测仍然能装，只是别用来发布
+storeFile=C:/path/to/your-release.jks
+storePassword=你的密钥库口令
+keyAlias=你的别名
+keyPassword=你的别名口令
+
+# 生成一把新钥匙：
+# keytool -genkeypair -keystore your-release.jks -alias youralias \
+#   -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=YourName, O=YourOrg, C=CN"
+#
+# 换签名意味着手机上已装的旧版必须先卸载（不同签名的包不能覆盖安装）

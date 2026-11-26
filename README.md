@@ -96,6 +96,28 @@ timecard/
 
 ---
 
+## 下载安装
+
+不想自己编译的话，直接去 [Releases](https://github.com/fotlim/timecard/releases/latest) 下载现成包：
+
+| 端 | 文件 | 说明 |
+|---|---|---|
+| Windows | `…-setup.exe` | 安装包未签名，首次运行会被 SmartScreen 拦一下：**更多信息 → 仍要运行** |
+| Android | `Timecard-<版本>-android.apk` | 正式密钥签名（v1 + v2 + v3 全齐），支持 Android 6.0 及以上 |
+
+**校验一下更稳**（能排除下载被截断这种「装不上」的常见原因）：
+
+```bash
+certutil -hashfile Timecard-0.1.3-android.apk SHA256   # Windows
+sha256sum Timecard-0.1.3-android.apk                 # Linux / macOS
+```
+
+**小米 / 红米（MIUI · HyperOS）报「解析包错误 33 / packageInfo is null」**：这个错误是安装器读不到临时副本才抛的，多见于「浏览器下载面板直接点开」。换成 **文件管理 → 下载 → 点 APK** 安装；还不行就 `adb install -r Timecard-….apk`。
+
+> ⚠️ 0.1.0–0.1.2 的 APK 用的是调试签名。换正式签名后**跨签名不能覆盖安装**，要先卸载旧版（本地数据会清空，确认已同步或不需要再卸）。
+
+---
+
 ## 快速开始
 
 > 需要 **Node ≥ 22.5** 和 **pnpm**。仓库是 pnpm workspace，先在根目录装依赖：
@@ -119,8 +141,12 @@ pnpm --filter @timecard/desktop dist    # 打 Windows 安装包（在 Windows �
 pnpm --filter @timecard/mobile build
 cd apps/mobile
 npx cap sync android
-cd android && ./gradlew assembleDebug   # 产物在 app/build/outputs/apk/debug/
+cd android && ./gradlew assembleDebug     # 调试包：app/build/outputs/apk/debug/
+cd android && ./gradlew assembleRelease   # 正式包（R8 压缩 + 资源裁剪）：app/build/outputs/apk/release/
 ```
+
+**签名**：把 keystore 路径与口令写进 `apps/mobile/android/key.properties`（照抄 `key.properties.example`，该文件已 gitignore）；没有它时 release 会退化成 debug 签名，自己装得上，但别拿去发布。
+包里的 `versionCode` / `versionName` 由 `apps/mobile/package.json` 的 `version` 自动推出来（`0.1.3 → 103`），不用手动改两个地方。
 
 ### 同步服务器
 
