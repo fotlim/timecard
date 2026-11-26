@@ -3,5 +3,6 @@
  *
  * 单独放一个文件，避免 admin.ts 与 app.ts 互相 import 造成循环依赖。
  * 0.2.0：新增观测层 + 管理 API + Web 控制台。
+ * 0.2.1：控制台卡片搜索覆盖「标题 / 分类 / 条目内容」。
  */
-export const SERVER_VERSION = '0.2.0'
+export const SERVER_VERSION = '0.2.1'

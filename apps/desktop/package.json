@@ -1,9 +1,9 @@
 {
   "name": "@timecard/desktop",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "private": true,
   "description": "挂卡时间轴 · Windows 桌面端",
-  "author": "大肥鱼",
+  "author": "Timecard contributors",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",

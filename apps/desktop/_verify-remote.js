@@ -1,12 +1,12 @@
 // 桌面端 ⇄ 远程 Linux 主机 真实同步测试
-// 通过 SSH 隧道（127.0.0.1:3701）连到 AM01 上跑的服务端，桌面端不启动本地服务器。
+// 通过 SSH 隧道（127.0.0.1:8787）连到 REMOTE 上跑的服务端，桌面端不启动本地服务器。
 const { spawn } = require('child_process')
 const fs = require('fs')
 const path = require('path')
 const os = require('os')
 
 const PORT_DBG = 9871
-const REMOTE = process.env.REMOTE_URL || 'http://127.0.0.1:3701'
+const REMOTE = process.env.REMOTE_URL || 'http://127.0.0.1:8787'
 const TOKEN = process.env.REMOTE_TOKEN || ''
 const BASE = __dirname
 const WORKSPACE = path.resolve(BASE, '..', '..')
@@ -206,7 +206,7 @@ async function main() {
         id: 'from-linux-host',
         title: 'Linux 主机上建的卡',
         items: [],
-        tag: 'AM01',
+        tag: 'REMOTE',
         color: '#71805a',
         anchorAt: now,
         createdAt: now,
@@ -216,8 +216,8 @@ async function main() {
         status: 'open'
       }
       await remotePush({
-        deviceId: 'am01-host',
-        changes: [{ card: remoteCard, deviceId: 'am01-host', op: 'create', clientAt: now }]
+        deviceId: 'remote-host',
+        changes: [{ card: remoteCard, deviceId: 'remote-host', op: 'create', clientAt: now }]
       })
 
       await c.eval(`window.timecard.sync.now()`)
@@ -226,7 +226,7 @@ async function main() {
       const local = readData()
       const got = local.cards.find((x) => x.id === 'from-linux-host')
       check('桌面端拉到 Linux 主机建的卡', !!got, got ? got.title : '没拉到')
-      check('拉下来的内容一致', got?.title === 'Linux 主机上建的卡' && got?.tag === 'AM01')
+      check('拉下来的内容一致', got?.title === 'Linux 主机上建的卡' && got?.tag === 'REMOTE')
     }
 
     /* ---------- 5. 冲突：远端更晚 → 桌面端被覆盖 ---------- */
@@ -234,11 +234,11 @@ async function main() {
       const localCard = readData().cards.find((x) => x.title === '从 Windows 桌面推过去的卡')
       const newer = Date.now() + 90000
       await remotePush({
-        deviceId: 'am01-host',
+        deviceId: 'remote-host',
         changes: [
           {
             card: { ...localCard, title: 'Linux 主机改名了', updatedAt: newer, rev: localCard.rev + 1 },
-            deviceId: 'am01-host',
+            deviceId: 'remote-host',
             op: 'update',
             clientAt: newer
           }

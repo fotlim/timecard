@@ -63,7 +63,7 @@ export function createAdminApp(deps: AdminDeps): Hono {
   const admin = new Hono()
 
   /** 面板自己发起写操作时用的 deviceId —— 让设备列表能认出「这是面板干的」 */
-  const panelDevice = `panel@${runtime?.hostname ?? runtime?.kind ?? 'web'}`
+  const panelDevice = `panel@console`
 
   /**
    * 统计结果缓存。

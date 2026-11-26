@@ -32,7 +32,8 @@ win:
       arch:
         - x64
   icon: build/icon.ico
-  artifactName: ${productName}-${version}-setup.${ext}
+  # 产物名用纯 ASCII：中文名上传到 GitHub 会被削成「-0.1.0-setup.exe」这种残样
+  artifactName: Timecard-${version}-setup.${ext}
 
 nsis:
   oneClick: false

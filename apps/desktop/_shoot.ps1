@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # 验收脚本：类型检查 → 编译 → 截图
 #   竖屏今日 x3 皮肤 + 宽屏周视图 + 真浮窗 + 设置窗口
 # 用法： powershell -ExecutionPolicy Bypass -File _shoot.ps1
@@ -14,7 +14,14 @@ foreach ($v in 'TIMECARD_SHOT','TIMECARD_SHOT_QUICK','TIMECARD_SHOT_SETTINGS','T
 
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $workspace = Resolve-Path (Join-Path $here '..\..')
-$nodeBin = 'C:\Users\LinOcean\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin'
+# node 在哪由环境决定（别把某台机器的绝对路径写进仓库）：
+#   要么设 TC_NODE_BIN，要么让 node 已经在 PATH 里
+$nodeBin = $env:TC_NODE_BIN
+if (-not $nodeBin) {
+  $cmd = Get-Command node -ErrorAction SilentlyContinue
+  if ($cmd) { $nodeBin = Split-Path -Parent $cmd.Source }
+}
+if (-not $nodeBin) { throw '找不到 node —— 先装 Node 并放进 PATH，或设 TC_NODE_BIN 指向它的 bin 目录' }
 $env:PATH = "$nodeBin;" + $env:PATH
 
 $tsc = Join-Path $workspace 'node_modules\typescript\bin\tsc'

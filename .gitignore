@@ -52,7 +52,7 @@ apps/mobile/android/app/src/main/res/xml/network_security_config.xml.bak
 apps/mobile/release/
 # --- 内部笔记 / 本地验证产物（不对外发布）---
 *.internal.md
-apps/server/DEPLOY-AM01.md
+apps/server/DEPLOY-*.md
 _shots/
 apps/server/test/_b.*
 apps/mobile/android/capacitor-cordova-android-plugins/node_modules/

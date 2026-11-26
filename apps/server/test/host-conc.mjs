@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 
 const HERE = fileURLToPath(new URL('.', import.meta.url))
 const SERVER = process.env.SRV
-const PORT = Number(process.env.SRV_PORT ?? 3701)
+const PORT = Number(process.env.SRV_PORT ?? 8787)
 const TOKEN = process.env.SRV_TOKEN
 const BASE = `http://127.0.0.1:${PORT}`
 
