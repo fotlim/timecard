@@ -3,6 +3,8 @@
 > 把待办「挂」在时间轴节点上的个人任务应用 —— Windows 桌面端、Android 手机端，加一个自托管的同步服务器。
 >
 > 不是又一个滚动列表：卡片挂在「某一天」这条线上，一眼看清「今天要做什么、哪张卡逾期了」。
+>
+> 🌐 发布页：**https://fotlim.github.io/timecard/**（三套皮肤，可在线预览）
 
 ![桌面端 · 自然有机皮肤](docs/screenshots/desktop-organic.png)
 
