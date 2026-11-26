@@ -124,7 +124,7 @@ export const DEFAULT_SKIN: Skin = 'brutal'
 export interface DeviceInfo {
   /** 设备 id（uuid v4，首次启动生成并存本地） */
   id: string
-  /** 人类可读名字，如「大肥鱼的 Surface」 */
+  /** 人类可读名字，如「客厅的 Surface」 */
   name: string
   /** 平台 */
   platform: 'desktop' | 'mobile' | 'web'
